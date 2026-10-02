@@ -26,7 +26,7 @@ Example prompts:
 ## Requirements
 
 - Code execution must be enabled (Claude builds the PDF with small Python scripts). Python 3.8+, standard library only.
-- One PDF renderer: Google Chrome / Chromium / Edge (found automatically, including Playwright's browser cache and root/Docker setups), or `pip install weasyprint`, or Playwright. Set `CHROME_PATH` to use a specific binary.
+- One PDF renderer: Google Chrome / Chromium / Edge (found automatically, including Playwright's browser cache and root/Docker setups), or `pip install weasyprint`, or Playwright. Pass `--chrome <path>` to `build_cv.py` to use a specific binary.
 - Optional, for the visual check: `pdftoppm` (poppler) or `pip install pymupdf`.
 
 ## Development

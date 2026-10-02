@@ -3,16 +3,17 @@
 build_cv.py — Convert a populated CV HTML file to a print-ready PDF.
 
 Usage:
-    build_cv.py <input.html> <output.pdf>
+    build_cv.py <input.html> <output.pdf> [--chrome <path-to-chrome>]
 
 Renderer order:
-    1. Headless Chrome / Chromium / Edge / Brave. Found via $CHROME_PATH, common
-       install locations (macOS, Linux, Windows), PATH, and Playwright's browser
-       cache ($PLAYWRIGHT_BROWSERS_PATH, ~/.cache/ms-playwright, /opt/pw-browsers).
+    1. Headless Chrome / Chromium / Edge / Brave. Uses --chrome <path> if given,
+       otherwise searches common install locations (macOS, Linux, Windows), PATH,
+       and Playwright's browser cache in fixed folders (/opt/pw-browsers,
+       ~/.cache, ~/Library/Caches and AppData/Local ms-playwright).
     2. WeasyPrint (pip install weasyprint)
     3. Playwright (pip install playwright && playwright install chromium)
 
-Chrome is launched with --no-sandbox automatically when running as root (cloud
+Chrome is launched with --no-sandbox only when running as root (cloud
 containers, Docker), where it otherwise refuses to start.
 
 Refuses to build if the HTML still contains {{TOKEN}} placeholders.
@@ -52,7 +53,6 @@ CHROME_COMMANDS = (
 )
 
 PLAYWRIGHT_CACHE_DIRS = [
-    os.environ.get("PLAYWRIGHT_BROWSERS_PATH", ""),
     "/opt/pw-browsers",
     str(Path.home() / ".cache" / "ms-playwright"),
     str(Path.home() / "Library" / "Caches" / "ms-playwright"),
@@ -98,11 +98,10 @@ def try_playwright(input_html, output_pdf):
         return False
 
 
-def find_chrome():
-    """Locate a Chrome/Chromium binary, or None."""
-    env = os.environ.get("CHROME_PATH")
-    if env and Path(env).exists():
-        return env
+def find_chrome(explicit=None):
+    """Locate a Chrome/Chromium binary, or None. `explicit` (--chrome) wins."""
+    if explicit:
+        return explicit if Path(explicit).exists() else None
     for path in CHROME_PATHS:
         if Path(path).exists():
             return path
@@ -133,16 +132,16 @@ def _is_root():
     return hasattr(os, "geteuid") and os.geteuid() == 0
 
 
-def try_chrome(input_html, output_pdf):
+def try_chrome(input_html, output_pdf, chrome_path=None):
     """Try rendering with headless Chrome. Returns True on success."""
-    chrome = find_chrome()
+    chrome = find_chrome(chrome_path)
     if not chrome:
         return False
     input_url = Path(input_html).resolve().as_uri()
     output_abs = str(Path(output_pdf).resolve())
 
     base = [chrome, "--disable-gpu", "--hide-scrollbars", "--no-first-run"]
-    if _is_root() or os.environ.get("CHROME_NO_SANDBOX"):
+    if _is_root():
         base += ["--no-sandbox", "--disable-dev-shm-usage"]
 
     # Newer Chrome uses --no-pdf-header-footer; older used --print-to-pdf-no-header.
@@ -213,7 +212,7 @@ def report_page_count(output_pdf):
         print("  (2 pages — acceptable, but 1 is preferred for entry/mid level.)")
 
 
-def build_cv(input_html, output_pdf):
+def build_cv(input_html, output_pdf, chrome_path=None):
     input_html = Path(input_html)
     output_pdf = Path(output_pdf)
 
@@ -237,7 +236,7 @@ def build_cv(input_html, output_pdf):
     # Chrome first: reliably present on macOS and avoids WeasyPrint's noisy
     # native-lib import warnings when its system deps aren't installed.
     print("  Trying headless Chrome...")
-    if try_chrome(input_html, output_pdf):
+    if try_chrome(input_html, output_pdf, chrome_path):
         print(f"✅ Rendered with Chrome: {output_pdf}")
         report_page_count(output_pdf)
         return True
@@ -258,18 +257,27 @@ def build_cv(input_html, output_pdf):
         "\n❌ No PDF renderer available. Install one of:\n"
         "    pip install weasyprint\n"
         "    pip install playwright && playwright install chromium\n"
-        "    or install Google Chrome / Chromium (or set CHROME_PATH to its binary)\n",
+        "    or install Google Chrome / Chromium (or pass --chrome <path-to-binary>)\n",
         file=sys.stderr,
     )
     return False
 
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: build_cv.py <input.html> <output.pdf>", file=sys.stderr)
+    args = sys.argv[1:]
+    chrome_path = None
+    if "--chrome" in args:
+        i = args.index("--chrome")
+        if i + 1 >= len(args):
+            print("--chrome needs a path", file=sys.stderr)
+            sys.exit(1)
+        chrome_path = args[i + 1]
+        del args[i:i + 2]
+    if len(args) != 2:
+        print("Usage: build_cv.py <input.html> <output.pdf> [--chrome <path>]", file=sys.stderr)
         sys.exit(1)
 
-    success = build_cv(sys.argv[1], sys.argv[2])
+    success = build_cv(args[0], args[1], chrome_path)
     sys.exit(0 if success else 1)
 
 

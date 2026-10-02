@@ -143,7 +143,7 @@ Run the build script to convert the populated HTML to PDF:
 python3 scripts/build_cv.py /tmp/cv_working.html /tmp/cv_output.pdf
 ```
 
-The script finds headless Chrome/Chromium (including Playwright's browser cache and root/container setups), then falls back to WeasyPrint, then Playwright, and prints install instructions if none is available (`CHROME_PATH` can point it at a specific binary). It refuses to build if placeholders are left over, reports the page count, and warns at 3+ pages; if so, return to step 5 and trim.
+The script finds headless Chrome/Chromium (including Playwright's browser cache and root/container setups), then falls back to WeasyPrint, then Playwright, and prints install instructions if none is available (`--chrome <path>` points it at a specific binary). It refuses to build if placeholders are left over, reports the page count, and warns at 3+ pages; if so, return to step 5 and trim.
 
 Save the finished files where the user can get them: their working/connected folder or the session's outputs folder if one exists, otherwise present them as attachments. Intermediate files (JSON, HTML, PNG previews) stay in the scratch directory.
 

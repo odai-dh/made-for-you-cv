@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+- `build_cv.py` no longer reads any environment variables. `CHROME_PATH`, `CHROME_NO_SANDBOX` and `PLAYWRIGHT_BROWSERS_PATH` are removed. Use the optional `--chrome <path>` argument to pick a browser binary; `--no-sandbox` is used only when running as root; Playwright's browser cache is searched in fixed folders only.
+- Audited the repo for other environment, credential, token and network access: none in scripts, tests, commands or docs.
+
 ## 0.2.1
 - Add `PRIVACY.md` and link it from the README.
 - Add directory listing fields to `plugin.json`: `privacyPolicyUrl`, `documentationUrl`, `supportUrl`.
