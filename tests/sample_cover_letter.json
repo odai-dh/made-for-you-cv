@@ -1,0 +1,12 @@
+{
+  "NAME": "Jane Doe",
+  "TITLE": "Frontend Developer",
+  "LOCATION": "Stockholm, Sweden",
+  "EMAIL": "jane@example.com",
+  "PHONE": "+46 70 123 45 67",
+  "DATE": "2 October 2026",
+  "RECIPIENT_BLOCK": "Anna Lindqvist\nExample Company AB\nStockholm",
+  "SALUTATION": "Dear Anna Lindqvist,",
+  "BODY": "<p>First paragraph about the role.</p><p>Second paragraph about a relevant project.</p><p>Third paragraph about the company.</p>",
+  "CLOSING": "Best regards,"
+}

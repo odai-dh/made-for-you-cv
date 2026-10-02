@@ -1,7 +1,6 @@
 {
   "name": "made-for-you-cv",
-  "displayName": "Made For You CV",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turn your CV and a job posting into a tailored, designed, ATS-aware PDF CV and optional cover letter. Honest tailoring, three neutral templates, Swedish/Nordic and European CV conventions.",
   "author": {
     "name": "Odai Dahi",
@@ -10,5 +9,13 @@
   "homepage": "https://github.com/odai-dh/made-for-you-cv",
   "repository": "https://github.com/odai-dh/made-for-you-cv",
   "license": "MIT",
-  "keywords": ["cv", "resume", "job-application", "cover-letter", "ats", "career", "sweden"]
+  "keywords": [
+    "cv",
+    "resume",
+    "job-application",
+    "cover-letter",
+    "ats",
+    "career",
+    "sweden"
+  ]
 }

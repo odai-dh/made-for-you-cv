@@ -82,30 +82,33 @@ Following `references/cv_writing_guide.md`:
 
 ### Step 6: Populate the chosen template
 
-The three templates live in `assets/templates/`:
-- `minimal.html`: single column, lots of whitespace, conservative
-- `two-column.html`: sidebar with skills/contact + main column for experience
-- `designer-accent.html`: bold name treatment, mono-font skill tags, more personality (still neutral palette)
+**Script paths.** `scripts/` and `assets/` below are relative to this skill's folder (the directory containing this SKILL.md), not the user's working directory. Resolve them to absolute paths before running anything, e.g. `${CLAUDE_PLUGIN_ROOT}/skills/made-for-you-cv/scripts/...` in Claude Code, or the skill's base directory elsewhere. Write working files to a scratch directory (the session's temp/scratchpad dir or `/tmp`), never into the skill folder.
 
-Each template uses `{{TOKEN}}` placeholders. To populate:
-1. Copy the chosen template HTML to a working file (e.g. `/tmp/cv_working.html`).
-2. Replace each token with the tailored content. Tokens vary slightly by template, so open the template file and check.
+The four templates live in `assets/templates/`:
+- `minimal`: single column, lots of whitespace, conservative (ATS-safe)
+- `two-column`: sidebar with skills/contact + main column for experience (ATS risk, see step 1)
+- `designer-accent`: bold name treatment, mono-font tech lines, more personality, still neutral and single column (ATS-safe)
+- `cover-letter`: matching header, used only for cover letters
 
-Common tokens across templates:
-- `{{NAME}}`, `{{TITLE}}`, `{{LOCATION}}`, `{{EMAIL}}`, `{{PHONE}}`
-- `{{PORTFOLIO}}`, `{{PORTFOLIO_DISPLAY}}` (URL vs human-readable form, e.g. `janedoe.dev`)
-- `{{LINKEDIN}}`, `{{LINKEDIN_DISPLAY}}` (e.g. `linkedin.com/in/jane-doe`)
-- `{{GITHUB}}`, `{{GITHUB_DISPLAY}}`
-- `{{SUMMARY}}`: the tailored 2-3 line profile paragraph
-- `{{EXPERIENCE_BLOCK}}`: full HTML for all experience entries
-- `{{PROJECTS_BLOCK}}`: full HTML for selected projects (drop the section if not used)
-- `{{EDUCATION_BLOCK}}`: full HTML for education entries
-- `{{SKILLS_BLOCK}}` (or `{{SIDEBAR_SKILLS_BLOCK}}` in two-column): grouped skills HTML
-- `{{LANGUAGES_BLOCK}}` (or `{{SIDEBAR_LANGUAGES_BLOCK}}` in two-column): languages HTML
+Do not hand-edit the HTML. Write the tailored content to a JSON file and let `fill_template.py` do the substitution. It HTML-escapes plain fields, adds `https://` to URLs, derives the `*_DISPLAY` forms, and drops optional contact items and empty sections (no stray separators, no empty headings). It fails loudly on a missing required field or leftover `{{TOKEN}}`.
 
-**Optional contact fields**: if the user has no portfolio, LinkedIn, GitHub, or phone, leave both tokens empty AND remove the surrounding markup so the line doesn't render with empty content or stray separators.
+```bash
+python3 scripts/fill_template.py minimal /tmp/cv_data.json /tmp/cv_working.html
+```
 
-For each entry block, generate clean HTML matching the template's existing class structure. Example entry HTML:
+JSON keys (all values are strings; omit or leave empty to drop an optional item):
+
+| Key | Required | Notes |
+|---|---|---|
+| `NAME`, `TITLE`, `EMAIL`, `SUMMARY`, `EXPERIENCE_BLOCK` | yes | `SUMMARY` is the tailored 2-3 line profile; plain text is fine |
+| `LOCATION`, `PHONE` | no | |
+| `PORTFOLIO`, `LINKEDIN`, `GITHUB` | no | Give the URL or bare domain (`janedoe.dev`); `*_DISPLAY` is derived, override it if needed |
+| `PROJECTS_BLOCK`, `EDUCATION_BLOCK`, `SKILLS_BLOCK`, `LANGUAGES_BLOCK` | no | Raw HTML (below). The section is removed if empty. Two-column reuses `SKILLS_BLOCK` / `LANGUAGES_BLOCK` in its sidebar |
+| `LANG` | no | `en` (default), `sv`, etc. Sets the document language |
+
+Cover letter keys: `NAME`, `EMAIL`, `DATE`, `SALUTATION`, `BODY` (HTML `<p>` paragraphs), `CLOSING` are required; `TITLE`, `LOCATION`, `PHONE`, `PORTFOLIO`, `LINKEDIN`, `GITHUB` and `RECIPIENT_BLOCK` (plain text, one line per line) are optional.
+
+Block fields take clean HTML using the template's class names. Entry example (experience, projects, education):
 
 ```html
 <div class="entry">
@@ -122,9 +125,15 @@ For each entry block, generate clean HTML matching the template's existing class
 </div>
 ```
 
-The `tech` line is optional; for non-technical roles use it for tools or methods, or drop it.
+Skills block, one group per line:
 
-If a section is empty (e.g. no projects on this version of the CV), remove its entire `<section>` rather than leaving an empty heading.
+```html
+<div class="skills-group"><strong>Frontend</strong> <span class="items">React, TypeScript, Next.js</span></div>
+```
+
+Languages block: `<span class="lang">Swedish (fluent)</span> <span class="lang">English (fluent)</span>`.
+
+The `tech` line, `<ul>` and sub-line are optional per entry (education usually has no bullets). For non-technical roles use `tech` for tools or methods, or drop it. Never put the user's data in the JSON that you would not put on the CV (no national ID numbers, no street address).
 
 ### Step 7: Build the PDF
 
@@ -134,7 +143,9 @@ Run the build script to convert the populated HTML to PDF:
 python3 scripts/build_cv.py /tmp/cv_working.html /tmp/cv_output.pdf
 ```
 
-The script tries headless Chrome/Chromium first, then WeasyPrint, then Playwright, and prints install instructions if none is available. It also reports the page count and warns at 3+ pages; if so, return to step 5 and trim.
+The script finds headless Chrome/Chromium (including Playwright's browser cache and root/container setups), then falls back to WeasyPrint, then Playwright, and prints install instructions if none is available (`CHROME_PATH` can point it at a specific binary). It refuses to build if placeholders are left over, reports the page count, and warns at 3+ pages; if so, return to step 5 and trim.
+
+Save the finished files where the user can get them: their working/connected folder or the session's outputs folder if one exists, otherwise present them as attachments. Intermediate files (JSON, HTML, PNG previews) stay in the scratch directory.
 
 Filename convention for the final PDF:
 `[FirstnameLastname]_CV_[Company]_[Role].pdf`, e.g. `JaneDoe_CV_Spotify_Frontend.pdf`. Underscores, no spaces.
@@ -156,8 +167,7 @@ Before presenting the PDF, check:
   python3 scripts/preview_cv.py /tmp/cv_output.pdf /tmp/cv_preview
   ```
   Then view `/tmp/cv_preview-1.png` (and `-2.png` if 2 pages). Fix the HTML and rebuild if anything is off.
-- **No leftover placeholders**: no `{{TOKEN}}` remaining in the final HTML.
-- **No empty sections** with headings, no stray separators from removed contact fields.
+- **No leftover placeholders / empty sections**: `fill_template.py` and `build_cv.py` already enforce this; if you bypassed them, check by hand.
 - **Keyword coverage**: confirm each must-have from step 3 appears, in the JD's own wording, somewhere in the CV. If a must-have is supported by the master CV but missing, add it. If it's missing because the user's background doesn't support it, leave it out and flag it. Report coverage briefly, e.g. "Covered 6/7 must-haves; 'GraphQL' left out since it's not in your background."
 
 Present the files to the user. Briefly note, in plain prose:
@@ -169,7 +179,7 @@ Offer to iterate. If the user shares new facts while iterating (a new job, a num
 
 ## Cover Letters
 
-When (and only when) explicitly requested, follow `references/cover_letter_guide.md` to write a tailored cover letter as a separate PDF using the same template family for visual consistency. Filename: `[FirstnameLastname]_CoverLetter_[Company]_[Role].pdf`.
+When (and only when) explicitly requested, follow `references/cover_letter_guide.md` to write a tailored cover letter. Fill the `cover-letter` template with `fill_template.py` (same header style as the CV), then build it with `build_cv.py` and export text with `html_to_text.py`. Filename: `[FirstnameLastname]_CoverLetter_[Company]_[Role].pdf`.
 
 ## Style Constraints
 
@@ -186,7 +196,7 @@ When (and only when) explicitly requested, follow `references/cover_letter_guide
 The structure for a user's master CV. Used in step 0 to convert whatever CV the user provides into a reusable source of truth.
 
 ### `assets/templates/`
-Three HTML/CSS templates: `minimal.html`, `two-column.html`, `designer-accent.html`. All A4, print-ready, neutral palette, with `{{TOKEN}}` placeholders.
+Four HTML/CSS templates: `minimal.html`, `two-column.html`, `designer-accent.html`, `cover-letter.html`. All A4, print-ready, neutral palette, with `{{TOKEN}}` placeholders and `<!--IF:TOKEN-->` optional blocks handled by `fill_template.py`.
 
 ### `references/cv_writing_guide.md`
 Tailoring principles, regional conventions (Sweden/Nordics vs UK/NL/DE), section ordering, anti-patterns, and example reframings.
@@ -200,11 +210,14 @@ Loaded only when a cover letter is requested. Structure, tone matching, and anti
 ### `references/example_tailored_cv.md`
 A worked end-to-end example with a fictional candidate (sample JD, parse, summary, finished CV), used as the quality bar.
 
+### `scripts/fill_template.py`
+Fills a template from a JSON file (escaping, URL normalization, optional-item removal, required-field and leftover-token checks). Run as `python3 scripts/fill_template.py <template-name|path> <data.json> <output.html>`.
+
 ### `scripts/build_cv.py`
 Converts a populated template HTML to PDF. Tries Chrome → WeasyPrint → Playwright and reports the page count. Run as `python3 scripts/build_cv.py <input.html> <output.pdf>`.
 
 ### `scripts/preview_cv.py`
-Renders a built PDF's pages to PNG for the visual check. Tries pdftoppm (all pages) then sips on macOS (first page). Run as `python3 scripts/preview_cv.py <input.pdf> [output_prefix]`.
+Renders a built PDF's pages to PNG for the visual check. Tries pdftoppm (all pages), then PyMuPDF/pypdfium2, then sips on macOS (first page). Run as `python3 scripts/preview_cv.py <input.pdf> [output_prefix]`.
 
 ### `scripts/html_to_text.py`
 Converts a populated CV/cover-letter HTML to clean plain text for ATS forms. Standard library only. Run as `python3 scripts/html_to_text.py <input.html> [output.txt]`.

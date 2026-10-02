@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{LANG}}">
 <head>
 <meta charset="UTF-8">
-<title>{{NAME}} — CV</title>
+<title>{{NAME}} - CV</title>
 <style>
   @page {
     size: A4;
@@ -63,6 +63,7 @@
   .entry-sub { color: #555; font-size: 9.5pt; margin-bottom: 3pt; font-style: italic; }
   .entry ul { margin: 3pt 0 0 14pt; padding: 0; }
   .entry li { margin-bottom: 2pt; }
+  .entry .tech { color: #666; font-size: 9pt; margin-top: 3pt; }
 
   .skills-group { margin-bottom: 4pt; }
   .skills-group strong { color: #333; }
@@ -70,6 +71,9 @@
   .languages span { margin-right: 12pt; color: #444; }
 
   a { color: inherit; }
+  .entry { break-inside: avoid; }
+  h2 { break-after: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 </style>
 </head>
 <body>
@@ -77,14 +81,14 @@
 <header>
   <h1>{{NAME}}</h1>
   <div class="role">{{TITLE}}</div>
-  <div class="contact">
-    <span>{{LOCATION}}</span><span class="sep">·</span>
-    <a href="mailto:{{EMAIL}}">{{EMAIL}}</a><span class="sep">·</span>
-    <span>{{PHONE}}</span><span class="sep">·</span>
-    <a href="{{PORTFOLIO}}">{{PORTFOLIO_DISPLAY}}</a><span class="sep">·</span>
-    <a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a><span class="sep">·</span>
-    <a href="{{LINKEDIN}}">{{LINKEDIN_DISPLAY}}</a>
-  </div>
+  <div class="contact"><!--CONTACT-->
+    <!--IF:LOCATION--><span>{{LOCATION}}</span><span class="sep">·</span><!--/IF:LOCATION-->
+    <!--IF:EMAIL--><a href="mailto:{{EMAIL}}">{{EMAIL}}</a><span class="sep">·</span><!--/IF:EMAIL-->
+    <!--IF:PHONE--><span>{{PHONE}}</span><span class="sep">·</span><!--/IF:PHONE-->
+    <!--IF:PORTFOLIO--><a href="{{PORTFOLIO}}">{{PORTFOLIO_DISPLAY}}</a><span class="sep">·</span><!--/IF:PORTFOLIO-->
+    <!--IF:GITHUB--><a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a><span class="sep">·</span><!--/IF:GITHUB-->
+    <!--IF:LINKEDIN--><a href="{{LINKEDIN}}">{{LINKEDIN_DISPLAY}}</a><span class="sep">·</span><!--/IF:LINKEDIN-->
+  <!--/CONTACT--></div>
 </header>
 
 <section class="summary">
@@ -96,25 +100,33 @@
   {{EXPERIENCE_BLOCK}}
 </section>
 
+<!--IF:PROJECTS_BLOCK-->
 <section>
   <h2>Selected Projects</h2>
   {{PROJECTS_BLOCK}}
 </section>
+<!--/IF:PROJECTS_BLOCK-->
 
+<!--IF:EDUCATION_BLOCK-->
 <section>
   <h2>Education</h2>
   {{EDUCATION_BLOCK}}
 </section>
+<!--/IF:EDUCATION_BLOCK-->
 
+<!--IF:SKILLS_BLOCK-->
 <section>
   <h2>Skills</h2>
   {{SKILLS_BLOCK}}
 </section>
+<!--/IF:SKILLS_BLOCK-->
 
+<!--IF:LANGUAGES_BLOCK-->
 <section>
   <h2>Languages</h2>
   <div class="languages">{{LANGUAGES_BLOCK}}</div>
 </section>
+<!--/IF:LANGUAGES_BLOCK-->
 
 </body>
 </html>

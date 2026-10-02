@@ -5,21 +5,27 @@ build_cv.py — Convert a populated CV HTML file to a print-ready PDF.
 Usage:
     build_cv.py <input.html> <output.pdf>
 
-Prerequisites:
-    Tries WeasyPrint first (pip install weasyprint).
-    Falls back to headless Chrome / Chromium if WeasyPrint is unavailable.
-    Falls back to Playwright if installed.
+Renderer order:
+    1. Headless Chrome / Chromium / Edge / Brave. Found via $CHROME_PATH, common
+       install locations (macOS, Linux, Windows), PATH, and Playwright's browser
+       cache ($PLAYWRIGHT_BROWSERS_PATH, ~/.cache/ms-playwright, /opt/pw-browsers).
+    2. WeasyPrint (pip install weasyprint)
+    3. Playwright (pip install playwright && playwright install chromium)
 
-Designed to run on macOS where Google Chrome is typically pre-installed at:
-    /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+Chrome is launched with --no-sandbox automatically when running as root (cloud
+containers, Docker), where it otherwise refuses to start.
 
+Refuses to build if the HTML still contains {{TOKEN}} placeholders.
 Exits non-zero on any failure with a clear message.
 """
 
-import sys
+import glob
 import os
+import re
 import shutil
 import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 
@@ -27,9 +33,30 @@ CHROME_PATHS = [
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
     "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
     "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
     "/usr/bin/chromium",
     "/usr/bin/chromium-browser",
+    "/snap/bin/chromium",
+    "/usr/bin/microsoft-edge",
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+]
+
+CHROME_COMMANDS = (
+    "google-chrome", "google-chrome-stable", "chromium", "chromium-browser",
+    "chrome", "microsoft-edge", "msedge",
+)
+
+PLAYWRIGHT_CACHE_DIRS = [
+    os.environ.get("PLAYWRIGHT_BROWSERS_PATH", ""),
+    "/opt/pw-browsers",
+    str(Path.home() / ".cache" / "ms-playwright"),
+    str(Path.home() / "Library" / "Caches" / "ms-playwright"),
+    str(Path.home() / "AppData" / "Local" / "ms-playwright"),
 ]
 
 
@@ -55,7 +82,7 @@ def try_playwright(input_html, output_pdf):
         return False
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch()
+            browser = p.chromium.launch(args=["--no-sandbox"] if _is_root() else [])
             page = browser.new_page()
             page.goto(f"file://{Path(input_html).resolve()}")
             page.pdf(
@@ -72,15 +99,38 @@ def try_playwright(input_html, output_pdf):
 
 
 def find_chrome():
-    """Locate a Chrome/Chromium binary."""
+    """Locate a Chrome/Chromium binary, or None."""
+    env = os.environ.get("CHROME_PATH")
+    if env and Path(env).exists():
+        return env
     for path in CHROME_PATHS:
         if Path(path).exists():
             return path
-    for cmd in ("google-chrome", "chromium", "chromium-browser"):
+    for cmd in CHROME_COMMANDS:
         found = shutil.which(cmd)
         if found:
             return found
+    # Playwright's browser cache (full chromium first, then the headless shell).
+    for base in PLAYWRIGHT_CACHE_DIRS:
+        if not base:
+            continue
+        patterns = [
+            "chromium-*/chrome-linux*/chrome",
+            "chromium-*/chrome-mac*/Chromium.app/Contents/MacOS/Chromium",
+            "chromium-*/chrome-win*/chrome.exe",
+            "chromium_headless_shell-*/chrome-linux*/headless_shell",
+            "chromium_headless_shell-*/chrome-linux*/chrome",
+        ]
+        for pat in patterns:
+            hits = sorted(glob.glob(os.path.join(base, pat)), reverse=True)
+            for hit in hits:
+                if os.access(hit, os.X_OK):
+                    return hit
     return None
+
+
+def _is_root():
+    return hasattr(os, "geteuid") and os.geteuid() == 0
 
 
 def try_chrome(input_html, output_pdf):
@@ -88,28 +138,34 @@ def try_chrome(input_html, output_pdf):
     chrome = find_chrome()
     if not chrome:
         return False
-    input_url = f"file://{Path(input_html).resolve()}"
+    input_url = Path(input_html).resolve().as_uri()
     output_abs = str(Path(output_pdf).resolve())
-    cmd = [
-        chrome,
-        "--headless=new",
-        "--disable-gpu",
-        "--no-pdf-header-footer",
-        f"--print-to-pdf={output_abs}",
-        "--no-margins",
-        input_url,
+
+    base = [chrome, "--disable-gpu", "--hide-scrollbars", "--no-first-run"]
+    if _is_root() or os.environ.get("CHROME_NO_SANDBOX"):
+        base += ["--no-sandbox", "--disable-dev-shm-usage"]
+
+    # Newer Chrome uses --no-pdf-header-footer; older used --print-to-pdf-no-header.
+    attempts = [
+        ["--headless=new", "--no-pdf-header-footer"],
+        ["--headless", "--no-pdf-header-footer"],
+        ["--headless", "--print-to-pdf-no-header"],
     ]
-    try:
-        result = subprocess.run(cmd, capture_output=True, timeout=60)
-        if result.returncode == 0 and Path(output_pdf).exists():
-            return True
-        # Some Chrome versions don't support --no-pdf-header-footer; retry without it
-        cmd_fallback = [c for c in cmd if c not in ("--no-pdf-header-footer", "--no-margins")]
-        result = subprocess.run(cmd_fallback, capture_output=True, timeout=60)
-        return result.returncode == 0 and Path(output_pdf).exists()
-    except Exception as e:
-        print(f"  Chrome failed: {e}", file=sys.stderr)
-        return False
+    with tempfile.TemporaryDirectory(prefix="cv-chrome-") as profile:
+        for flags in attempts:
+            cmd = base + flags + [
+                f"--user-data-dir={profile}",
+                f"--print-to-pdf={output_abs}",
+                input_url,
+            ]
+            try:
+                result = subprocess.run(cmd, capture_output=True, timeout=90)
+            except Exception as e:
+                print(f"  Chrome failed: {e}", file=sys.stderr)
+                continue
+            if result.returncode == 0 and Path(output_pdf).exists() and Path(output_pdf).stat().st_size > 0:
+                return True
+    return False
 
 
 def count_pages(output_pdf):
@@ -134,7 +190,7 @@ def count_pages(output_pdf):
         data = output_pdf.read_bytes()
         import re
 
-        count = len(re.findall(rb"/Type\s*/Page[^s]", data))
+        count = len(re.findall(rb"/Type\s*/Page(?![a-zA-Z])", data))
         return count or None
     except Exception:
         return None
@@ -165,6 +221,15 @@ def build_cv(input_html, output_pdf):
         print(f"❌ Input file not found: {input_html}", file=sys.stderr)
         return False
 
+    leftover = sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", input_html.read_text(encoding="utf-8"))))
+    if leftover:
+        print(
+            f"❌ Unfilled placeholders in {input_html.name}: {', '.join(leftover)}\n"
+            "   Fill them (see scripts/fill_template.py) before building.",
+            file=sys.stderr,
+        )
+        return False
+
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"Building PDF: {input_html.name} → {output_pdf.name}")
@@ -193,7 +258,7 @@ def build_cv(input_html, output_pdf):
         "\n❌ No PDF renderer available. Install one of:\n"
         "    pip install weasyprint\n"
         "    pip install playwright && playwright install chromium\n"
-        "    or install Google Chrome\n",
+        "    or install Google Chrome / Chromium (or set CHROME_PATH to its binary)\n",
         file=sys.stderr,
     )
     return False
