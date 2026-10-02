@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{NAME}} — CV</title>
+<style>
+  @page { size: A4; margin: 16mm 18mm; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10pt; line-height: 1.45; color: #111;
+  }
+  header {
+    display: flex; justify-content: space-between;
+    align-items: flex-end; padding-bottom: 10pt;
+    border-bottom: 3px solid #111; margin-bottom: 14pt;
+  }
+  header .name-block h1 {
+    margin: 0; font-size: 26pt; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1;
+    white-space: nowrap;
+  }
+  header .name-block .role {
+    margin-top: 4pt; font-size: 11pt;
+    color: #444; font-weight: 500;
+  }
+  header .contact-block {
+    text-align: right; font-size: 9pt;
+    color: #444; line-height: 1.55;
+  }
+  header .contact-block a { color: #444; text-decoration: none; }
+  header .contact-block .row { white-space: nowrap; }
+
+  section { margin-bottom: 13pt; }
+  h2 {
+    font-size: 10pt; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: #111; margin: 0 0 7pt 0;
+    display: flex; align-items: center; gap: 8pt;
+  }
+  h2::after {
+    content: ""; flex: 1; height: 1px;
+    background: #d0d0d0; display: inline-block;
+  }
+  .summary { color: #222; font-size: 10.5pt; }
+
+  .entry { margin-bottom: 10pt; }
+  .entry-header {
+    display: flex; justify-content: space-between;
+    align-items: baseline; margin-bottom: 1pt;
+  }
+  .entry-title { font-weight: 600; font-size: 10.5pt; }
+  .entry-title .at { color: #888; font-weight: 400; margin: 0 4pt; }
+  .entry-meta {
+    color: #555; font-size: 9pt; white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .entry-sub { color: #555; font-size: 9pt; margin-bottom: 3pt; }
+  .entry ul { margin: 3pt 0 0 14pt; padding: 0; }
+  .entry li { margin-bottom: 2pt; }
+  .entry .tech {
+    color: #666; font-size: 8.5pt; margin-top: 4pt;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  .skills-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 4pt 18pt;
+  }
+  .skills-grid .skills-group strong {
+    display: inline-block; min-width: 90pt;
+    color: #111; font-weight: 600; font-size: 9pt;
+  }
+  .skills-grid .skills-group .items { color: #444; font-size: 9pt; }
+
+  .languages span { margin-right: 14pt; color: #333; }
+
+  a { color: inherit; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="name-block">
+    <h1>{{NAME}}</h1>
+    <div class="role">{{TITLE}}</div>
+  </div>
+  <div class="contact-block">
+    <div class="row">{{LOCATION}} · {{PHONE}}</div>
+    <div class="row"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a></div>
+    <div class="row"><a href="{{PORTFOLIO}}">{{PORTFOLIO_DISPLAY}}</a></div>
+    <div class="row"><a href="{{LINKEDIN}}">{{LINKEDIN_DISPLAY}}</a> · <a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a></div>
+  </div>
+</header>
+
+<section class="summary">
+  {{SUMMARY}}
+</section>
+
+<section>
+  <h2>Experience</h2>
+  {{EXPERIENCE_BLOCK}}
+</section>
+
+<section>
+  <h2>Projects</h2>
+  {{PROJECTS_BLOCK}}
+</section>
+
+<section>
+  <h2>Education</h2>
+  {{EDUCATION_BLOCK}}
+</section>
+
+<section>
+  <h2>Skills</h2>
+  <div class="skills-grid">{{SKILLS_BLOCK}}</div>
+</section>
+
+<section>
+  <h2>Languages</h2>
+  <div class="languages">{{LANGUAGES_BLOCK}}</div>
+</section>
+
+</body>
+</html>

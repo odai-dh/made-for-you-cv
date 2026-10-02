@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.DS_Store
+master_cv.md
+*.pdf

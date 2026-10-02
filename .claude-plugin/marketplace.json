@@ -1,0 +1,15 @@
+{
+  "name": "odai-plugins",
+  "description": "CV and job-application plugins by Odai Dahi.",
+  "owner": {
+    "name": "Odai Dahi",
+    "url": "https://odaidh.dev"
+  },
+  "plugins": [
+    {
+      "name": "made-for-you-cv",
+      "source": "./",
+      "description": "Tailored, designed, ATS-aware PDF CVs and cover letters from your own CV and a job posting."
+    }
+  ]
+}
