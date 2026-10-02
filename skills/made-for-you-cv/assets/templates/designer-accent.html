@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{LANG}}">
 <head>
 <meta charset="UTF-8">
-<title>{{NAME}} — CV</title>
+<title>{{NAME}} - CV</title>
 <style>
   @page { size: A4; margin: 16mm 18mm; }
   * { box-sizing: border-box; }
@@ -64,19 +64,19 @@
     font-family: "SF Mono", Menlo, Consolas, monospace;
   }
 
-  .skills-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 4pt 18pt;
+  .skills-grid .skills-group {
+    display: flex; gap: 10pt; margin-bottom: 3pt;
   }
   .skills-grid .skills-group strong {
-    display: inline-block; min-width: 90pt;
-    color: #111; font-weight: 600; font-size: 9pt;
+    flex: 0 0 80pt; color: #111; font-weight: 600; font-size: 9pt;
   }
-  .skills-grid .skills-group .items { color: #444; font-size: 9pt; }
+  .skills-grid .skills-group .items { flex: 1; color: #444; font-size: 9pt; }
 
   .languages span { margin-right: 14pt; color: #333; }
 
   a { color: inherit; }
+  .entry { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 </style>
 </head>
 <body>
@@ -87,10 +87,12 @@
     <div class="role">{{TITLE}}</div>
   </div>
   <div class="contact-block">
-    <div class="row">{{LOCATION}} · {{PHONE}}</div>
-    <div class="row"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a></div>
-    <div class="row"><a href="{{PORTFOLIO}}">{{PORTFOLIO_DISPLAY}}</a></div>
-    <div class="row"><a href="{{LINKEDIN}}">{{LINKEDIN_DISPLAY}}</a> · <a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a></div>
+    <!--IF:LOCATION--><div class="row">{{LOCATION}}</div><!--/IF:LOCATION-->
+    <!--IF:PHONE--><div class="row">{{PHONE}}</div><!--/IF:PHONE-->
+    <!--IF:EMAIL--><div class="row"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a></div><!--/IF:EMAIL-->
+    <!--IF:PORTFOLIO--><div class="row"><a href="{{PORTFOLIO}}">{{PORTFOLIO_DISPLAY}}</a></div><!--/IF:PORTFOLIO-->
+    <!--IF:LINKEDIN--><div class="row"><a href="{{LINKEDIN}}">{{LINKEDIN_DISPLAY}}</a></div><!--/IF:LINKEDIN-->
+    <!--IF:GITHUB--><div class="row"><a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a></div><!--/IF:GITHUB-->
   </div>
 </header>
 
@@ -103,25 +105,33 @@
   {{EXPERIENCE_BLOCK}}
 </section>
 
+<!--IF:PROJECTS_BLOCK-->
 <section>
   <h2>Projects</h2>
   {{PROJECTS_BLOCK}}
 </section>
+<!--/IF:PROJECTS_BLOCK-->
 
+<!--IF:EDUCATION_BLOCK-->
 <section>
   <h2>Education</h2>
   {{EDUCATION_BLOCK}}
 </section>
+<!--/IF:EDUCATION_BLOCK-->
 
+<!--IF:SKILLS_BLOCK-->
 <section>
   <h2>Skills</h2>
   <div class="skills-grid">{{SKILLS_BLOCK}}</div>
 </section>
+<!--/IF:SKILLS_BLOCK-->
 
+<!--IF:LANGUAGES_BLOCK-->
 <section>
   <h2>Languages</h2>
   <div class="languages">{{LANGUAGES_BLOCK}}</div>
 </section>
+<!--/IF:LANGUAGES_BLOCK-->
 
 </body>
 </html>

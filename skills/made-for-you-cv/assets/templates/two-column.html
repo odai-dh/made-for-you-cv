@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{LANG}}">
 <head>
 <meta charset="UTF-8">
-<title>{{NAME}} — CV</title>
+<title>{{NAME}} - CV</title>
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
@@ -11,12 +11,18 @@
     font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 9.5pt; line-height: 1.4; color: #1a1a1a;
   }
-  .page { display: flex; min-height: 297mm; }
+  /* Fixed elements repeat on every printed page: paints the sidebar tint full-bleed. */
+  .sidebar-bg { position: fixed; top: 0; bottom: 0; left: 0; width: 70mm; background: #f4f3f1; z-index: -1; }
+  /* thead/tfoot repeat on every page: gives continuation pages top and bottom spacing despite the zero page margin. */
+  table.frame { width: 100%; border-collapse: collapse; }
+  table.frame td { padding: 0; vertical-align: top; }
+  .frame .spacer { height: 14mm; }
+  .page { display: flex; align-items: flex-start; }
   .sidebar {
-    width: 70mm; background: #f4f3f1;
-    padding: 16mm 11mm; color: #2a2a2a;
+    width: 70mm; flex: 0 0 70mm;
+    padding: 0 11mm; color: #2a2a2a;
   }
-  .main { flex: 1; padding: 16mm 14mm 16mm 12mm; }
+  .main { flex: 1; min-width: 0; padding: 0 14mm 0 12mm; }
 
   .sidebar h1 {
     margin: 0 0 2pt 0;
@@ -37,7 +43,7 @@
     margin-bottom: 1pt; font-weight: 600;
   }
   .sidebar .skills-group .items { color: #444; font-size: 9pt; }
-  .sidebar .languages-list .lang { margin-bottom: 2pt; font-size: 9pt; }
+  .sidebar .languages-list .lang { display: block; margin-bottom: 2pt; font-size: 9pt; }
 
   .main h2 {
     font-size: 9pt; font-weight: 700;
@@ -61,28 +67,39 @@
   .entry .tech { color: #666; font-size: 8.5pt; margin-top: 3pt; }
 
   a { color: inherit; }
+  .entry, .skills-group { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 </style>
 </head>
 <body>
 
+<div class="sidebar-bg"></div>
+<table class="frame">
+<thead><tr><td><div class="spacer"></div></td></tr></thead>
+<tfoot><tr><td><div class="spacer"></div></td></tr></tfoot>
+<tbody><tr><td>
 <div class="page">
   <aside class="sidebar">
     <h1>{{NAME}}</h1>
     <div class="role">{{TITLE}}</div>
 
     <h2>Contact</h2>
-    <div class="contact-item">{{LOCATION}}</div>
-    <div class="contact-item"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a></div>
-    <div class="contact-item">{{PHONE}}</div>
-    <div class="contact-item"><a href="{{PORTFOLIO}}">{{PORTFOLIO_DISPLAY}}</a></div>
-    <div class="contact-item"><a href="{{LINKEDIN}}">{{LINKEDIN_DISPLAY}}</a></div>
-    <div class="contact-item"><a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a></div>
+    <!--IF:LOCATION--><div class="contact-item">{{LOCATION}}</div><!--/IF:LOCATION-->
+    <!--IF:EMAIL--><div class="contact-item"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a></div><!--/IF:EMAIL-->
+    <!--IF:PHONE--><div class="contact-item">{{PHONE}}</div><!--/IF:PHONE-->
+    <!--IF:PORTFOLIO--><div class="contact-item"><a href="{{PORTFOLIO}}">{{PORTFOLIO_DISPLAY}}</a></div><!--/IF:PORTFOLIO-->
+    <!--IF:LINKEDIN--><div class="contact-item"><a href="{{LINKEDIN}}">{{LINKEDIN_DISPLAY}}</a></div><!--/IF:LINKEDIN-->
+    <!--IF:GITHUB--><div class="contact-item"><a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a></div><!--/IF:GITHUB-->
 
+    <!--IF:SIDEBAR_SKILLS_BLOCK-->
     <h2>Skills</h2>
     {{SIDEBAR_SKILLS_BLOCK}}
+    <!--/IF:SIDEBAR_SKILLS_BLOCK-->
 
+    <!--IF:SIDEBAR_LANGUAGES_BLOCK-->
     <h2>Languages</h2>
     <div class="languages-list">{{SIDEBAR_LANGUAGES_BLOCK}}</div>
+    <!--/IF:SIDEBAR_LANGUAGES_BLOCK-->
   </aside>
 
   <main class="main">
@@ -96,17 +113,23 @@
       {{EXPERIENCE_BLOCK}}
     </section>
 
+    <!--IF:PROJECTS_BLOCK-->
     <section>
       <h2>Projects</h2>
       {{PROJECTS_BLOCK}}
     </section>
+    <!--/IF:PROJECTS_BLOCK-->
 
+    <!--IF:EDUCATION_BLOCK-->
     <section>
       <h2>Education</h2>
       {{EDUCATION_BLOCK}}
     </section>
+    <!--/IF:EDUCATION_BLOCK-->
   </main>
 </div>
+</td></tr></tbody>
+</table>
 
 </body>
 </html>

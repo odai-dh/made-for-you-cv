@@ -9,7 +9,24 @@
     {
       "name": "made-for-you-cv",
       "source": "./",
-      "description": "Tailored, designed, ATS-aware PDF CVs and cover letters from your own CV and a job posting."
+      "description": "Tailored, designed, ATS-aware PDF CVs and cover letters from your own CV and a job posting.",
+      "version": "0.2.0",
+      "category": "productivity",
+      "keywords": [
+        "cv",
+        "resume",
+        "job-application",
+        "cover-letter",
+        "ats",
+        "career",
+        "sweden"
+      ],
+      "author": {
+        "name": "Odai Dahi",
+        "url": "https://odaidh.dev"
+      },
+      "license": "MIT",
+      "homepage": "https://github.com/odai-dh/made-for-you-cv"
     }
   ]
 }

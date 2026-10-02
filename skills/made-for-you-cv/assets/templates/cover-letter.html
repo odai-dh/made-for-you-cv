@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<title>{{NAME}} - Cover letter</title>
+<style>
+  @page { size: A4; margin: 20mm 22mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10.5pt; line-height: 1.55; color: #1a1a1a;
+  }
+  header { margin-bottom: 22pt; padding-bottom: 10pt; border-bottom: 1px solid #e5e5e5; }
+  header h1 { margin: 0 0 2pt 0; font-size: 18pt; font-weight: 600; letter-spacing: -0.01em; }
+  header .role { font-size: 10.5pt; color: #444; margin-bottom: 5pt; }
+  header .contact { font-size: 9.5pt; color: #555; }
+  header .contact a { color: #555; text-decoration: none; }
+  header .contact .sep { margin: 0 6pt; color: #aaa; }
+
+  .meta { margin-bottom: 16pt; color: #333; }
+  .meta .date { margin-bottom: 8pt; color: #666; }
+  .meta .recipient { line-height: 1.4; }
+  .salutation { margin-bottom: 10pt; }
+  .body p { margin: 0 0 10pt 0; }
+  .closing { margin-top: 14pt; }
+  .closing .name { margin-top: 18pt; font-weight: 600; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>{{NAME}}</h1>
+  <div class="role">{{TITLE}}</div>
+  <div class="contact"><!--CONTACT-->
+    <!--IF:LOCATION--><span>{{LOCATION}}</span><span class="sep">·</span><!--/IF:LOCATION-->
+    <!--IF:EMAIL--><a href="mailto:{{EMAIL}}">{{EMAIL}}</a><span class="sep">·</span><!--/IF:EMAIL-->
+    <!--IF:PHONE--><span>{{PHONE}}</span><span class="sep">·</span><!--/IF:PHONE-->
+    <!--IF:PORTFOLIO--><a href="{{PORTFOLIO}}">{{PORTFOLIO_DISPLAY}}</a><span class="sep">·</span><!--/IF:PORTFOLIO-->
+    <!--IF:GITHUB--><a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a><span class="sep">·</span><!--/IF:GITHUB-->
+    <!--IF:LINKEDIN--><a href="{{LINKEDIN}}">{{LINKEDIN_DISPLAY}}</a><span class="sep">·</span><!--/IF:LINKEDIN-->
+  <!--/CONTACT--></div>
+</header>
+
+<div class="meta">
+  <div class="date">{{DATE}}</div>
+  <!--IF:RECIPIENT_BLOCK--><div class="recipient">{{RECIPIENT_BLOCK}}</div><!--/IF:RECIPIENT_BLOCK-->
+</div>
+
+<div class="salutation">{{SALUTATION}}</div>
+
+<div class="body">
+  {{BODY}}
+</div>
+
+<div class="closing">
+  <div>{{CLOSING}}</div>
+  <div class="name">{{NAME}}</div>
+</div>
+
+</body>
+</html>

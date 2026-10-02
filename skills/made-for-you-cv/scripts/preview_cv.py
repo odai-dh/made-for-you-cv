@@ -14,7 +14,8 @@ HTML-only check cannot see.
 
 Renderer order:
     pdftoppm (poppler) — all pages, high fidelity. Preferred.
-    sips (macOS builtin) — first page only. Fallback.
+    PyMuPDF (pip install pymupdf) or pypdfium2 — all pages, pure pip.
+    sips (macOS builtin) — first page only. Last resort.
 
 Exits non-zero with a clear message if neither is available.
 """
@@ -43,6 +44,39 @@ def render_with_pdftoppm(input_pdf, prefix, dpi=150):
         return None
     pngs = sorted(prefix.parent.glob(f"{prefix.name}-*.png"))
     return pngs or None
+
+
+def render_with_python(input_pdf, prefix, dpi=150):
+    """Render all pages with PyMuPDF or pypdfium2 if installed."""
+    try:
+        import fitz  # PyMuPDF
+
+        doc = fitz.open(str(input_pdf))
+        out = []
+        for i, page in enumerate(doc, start=1):
+            path = prefix.parent / f"{prefix.name}-{i}.png"
+            page.get_pixmap(dpi=dpi).save(str(path))
+            out.append(path)
+        return out or None
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f"  PyMuPDF failed: {e}", file=sys.stderr)
+    try:
+        import pypdfium2 as pdfium
+
+        pdf = pdfium.PdfDocument(str(input_pdf))
+        out = []
+        for i in range(len(pdf)):
+            path = prefix.parent / f"{prefix.name}-{i + 1}.png"
+            pdf[i].render(scale=dpi / 72).to_pil().save(str(path))
+            out.append(path)
+        return out or None
+    except ImportError:
+        return None
+    except Exception as e:
+        print(f"  pypdfium2 failed: {e}", file=sys.stderr)
+        return None
 
 
 def render_with_sips(input_pdf, prefix):
@@ -83,12 +117,15 @@ def preview(input_pdf, prefix):
     print(f"Rendering preview: {input_pdf.name}")
     pngs = render_with_pdftoppm(input_pdf, prefix)
     if not pngs:
+        pngs = render_with_python(input_pdf, prefix)
+    if not pngs:
         pngs = render_with_sips(input_pdf, prefix)
 
     if not pngs:
         print(
             "\n❌ No PDF-to-image renderer available. Install one of:\n"
-            "    brew install poppler   (pdftoppm — all pages)\n"
+            "    brew install poppler / apt install poppler-utils   (pdftoppm)\n"
+            "    pip install pymupdf\n"
             "    (macOS sips is builtin but renders only page 1)\n",
             file=sys.stderr,
         )
