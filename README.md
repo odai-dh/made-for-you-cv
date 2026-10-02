@@ -40,7 +40,7 @@ claude plugin validate .             # manifest check
 
 ## Privacy
 
-Your CV is only used within your own Claude conversation to produce your documents. The plugin has no server and sends nothing anywhere. National ID numbers and full street addresses are never put on a CV.
+Your CV is only used within your own Claude conversation to produce your documents. The plugin has no server and sends nothing anywhere. National ID numbers and full street addresses are never put on a CV. See the full [privacy policy](PRIVACY.md).
 
 ## Install (Claude Code)
 
