@@ -10,7 +10,7 @@
       "name": "made-for-you-cv",
       "source": "./",
       "description": "Tailored, designed, ATS-aware PDF CVs and cover letters from your own CV and a job posting.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "category": "productivity",
       "keywords": [
         "cv",

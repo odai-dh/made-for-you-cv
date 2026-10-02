@@ -148,7 +148,7 @@ The script finds headless Chrome/Chromium (including Playwright's browser cache 
 Save the finished files where the user can get them: their working/connected folder or the session's outputs folder if one exists, otherwise present them as attachments. Intermediate files (JSON, HTML, PNG previews) stay in the scratch directory.
 
 Filename convention for the final PDF:
-`[FirstnameLastname]_CV_[Company]_[Role].pdf`, e.g. `JaneDoe_CV_Spotify_Frontend.pdf`. Underscores, no spaces.
+`[FirstnameLastname]_CV_[Company]_[Role].pdf`, e.g. `JaneDoe_CV_ExampleCorp_Frontend.pdf`. Underscores, no spaces.
 
 Also generate a plain-text version for ATS web forms, LinkedIn Easy Apply, and email bodies that don't accept a PDF:
 
