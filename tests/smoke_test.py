@@ -63,6 +63,47 @@ with tempfile.TemporaryDirectory() as tmp:
     check("+46" not in html and "janedoe.dev" not in html, "empty contact items removed")
     check(not re.search(r'class="sep">·</span>\s*</div>', html), "no trailing separator")
 
+    print("\n[no PDF engine: HTML + text fallback]")
+    # Simulated: patch every renderer to report "unavailable"; nothing is uninstalled.
+    fb_html = tmp / "fb_in.html"
+    r = run(SCRIPTS / "fill_template.py", "minimal", TESTS / "sample_cv.json", fb_html)
+    sim = (
+        "import sys; sys.path.insert(0, %r); import build_cv as b; "
+        "b.try_chrome = lambda *a, **k: False; b.try_weasyprint = lambda *a, **k: False; "
+        "b.try_playwright = lambda *a, **k: False; "
+        "out = sys.argv[2]; "
+        "plain = b.build_cv(sys.argv[1], out); "
+        "code = b.build_or_fallback(sys.argv[1], out); "
+        "print('RESULT', plain, code)"
+    ) % str(SCRIPTS)
+    out_pdf = tmp / "fallback" / "Jane_Doe_CV.pdf"
+    r = subprocess.run([sys.executable, "-c", sim, str(fb_html), str(out_pdf)], capture_output=True, text=True, cwd=tmp)
+    check("RESULT False 2" in r.stdout, "no engine: plain build fails, --fallback path returns exit code 2")
+    check(not out_pdf.exists(), "no PDF is produced")
+    check(out_pdf.with_suffix(".html").exists() and "Jane Doe" in out_pdf.with_suffix(".html").read_text(), "finished HTML is delivered")
+    check(out_pdf.with_suffix(".txt").exists() and "Jane Doe" in out_pdf.with_suffix(".txt").read_text(), "plain-text copy is delivered")
+    check("Print" in r.stderr, "user is told how to save as PDF")
+
+    print("\n[works from any working directory]")
+    elsewhere = tmp / "elsewhere"
+    elsewhere.mkdir()
+    r = subprocess.run([sys.executable, str(SCRIPTS / "fill_template.py"), "minimal", str(TESTS / "sample_cv.json"), "w.html"], capture_output=True, text=True, cwd=elsewhere)
+    check(r.returncode == 0 and (elsewhere / "w.html").exists(), "fill_template by name from another cwd")
+    r = subprocess.run([sys.executable, str(SCRIPTS / "build_cv.py"), "w.html", "w.pdf", "--fallback"], capture_output=True, text=True, cwd=elsewhere)
+    check(r.returncode in (0, 2) and ((elsewhere / "w.pdf").exists() or (elsewhere / "w.html").exists()), "build_cv --fallback from another cwd (exit %d)" % r.returncode)
+
+    print("\n[skill frontmatter]")
+    skill = (ROOT / "skills" / "made-for-you-cv" / "SKILL.md").read_text()
+    m = re.match(r'---\nname: made-for-you-cv\ndescription: "(.*)"\n---\n', skill)
+    check(bool(m), "frontmatter has name and quoted description")
+    if m:
+        d = m.group(1)
+        check(len(d) < 900, f"description under 900 chars ({len(d)})")
+        check("<" not in d and ">" not in d, "description has no angle brackets")
+        for phrase in ("resume", "cover letter", "job application", "apply for this job", "tailor my CV", "personligt brev", "anpassa mitt CV"):
+            check(phrase.lower() in d.lower(), f"description mentions '{phrase}'")
+    check("python3 scripts/" not in skill, "SKILL.md has no cwd-relative script calls")
+
     print("\n[guards]")
     (tmp / "bad.json").write_text(json.dumps({"NAME": "X"}))
     r = run(SCRIPTS / "fill_template.py", "minimal", tmp / "bad.json", tmp / "bad.html")

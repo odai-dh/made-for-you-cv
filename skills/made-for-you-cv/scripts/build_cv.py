@@ -3,7 +3,14 @@
 build_cv.py — Convert a populated CV HTML file to a print-ready PDF.
 
 Usage:
-    build_cv.py <input.html> <output.pdf> [--chrome <path-to-chrome>]
+    build_cv.py <input.html> <output.pdf> [--chrome <path-to-chrome>] [--fallback]
+
+Exit codes:
+    0  PDF built
+    1  error (missing input, leftover placeholders, no renderer without --fallback)
+    2  --fallback only: no PDF engine is available, so the finished HTML and a
+       plain-text copy were written next to <output.pdf> instead (same name,
+       .html and .txt). The user can open the HTML and use Print > Save as PDF.
 
 Renderer order:
     1. Headless Chrome / Chromium / Edge / Brave. Uses --chrome <path> if given,
@@ -28,6 +35,8 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 CHROME_PATHS = [
@@ -212,7 +221,11 @@ def report_page_count(output_pdf):
         print("  (2 pages — acceptable, but 1 is preferred for entry/mid level.)")
 
 
+NO_ENGINE = {"flag": False}
+
+
 def build_cv(input_html, output_pdf, chrome_path=None):
+    NO_ENGINE["flag"] = False
     input_html = Path(input_html)
     output_pdf = Path(output_pdf)
 
@@ -260,11 +273,45 @@ def build_cv(input_html, output_pdf, chrome_path=None):
         "    or install Google Chrome / Chromium (or pass --chrome <path-to-binary>)\n",
         file=sys.stderr,
     )
+    NO_ENGINE["flag"] = True
     return False
+
+
+def write_fallback(input_html, output_pdf):
+    """No PDF engine: leave a print-ready HTML and a plain-text copy next to the PDF path."""
+    from html_to_text import convert
+
+    input_html = Path(input_html)
+    output_pdf = Path(output_pdf)
+    html_out = output_pdf.with_suffix(".html")
+    txt_out = output_pdf.with_suffix(".txt")
+    if input_html.resolve() != html_out.resolve():
+        shutil.copyfile(input_html, html_out)
+    convert(html_out, txt_out)
+    print(
+        "\n⚠️  No PDF engine available here, so no PDF was made. Wrote instead:\n"
+        f"    {html_out}  (open it in a browser, then Print > Save as PDF, A4, margins None, background graphics on)\n"
+        f"    {txt_out}  (plain text for web forms)",
+        file=sys.stderr,
+    )
+    return html_out, txt_out
+
+
+def build_or_fallback(input_html, output_pdf, chrome_path=None):
+    """Returns 0 (PDF built), 2 (HTML + text fallback written) or 1 (error)."""
+    if build_cv(input_html, output_pdf, chrome_path):
+        return 0
+    if not NO_ENGINE["flag"]:
+        return 1
+    write_fallback(input_html, output_pdf)
+    return 2
 
 
 def main():
     args = sys.argv[1:]
+    fallback = "--fallback" in args
+    if fallback:
+        args.remove("--fallback")
     chrome_path = None
     if "--chrome" in args:
         i = args.index("--chrome")
@@ -274,11 +321,12 @@ def main():
         chrome_path = args[i + 1]
         del args[i:i + 2]
     if len(args) != 2:
-        print("Usage: build_cv.py <input.html> <output.pdf> [--chrome <path>]", file=sys.stderr)
+        print("Usage: build_cv.py <input.html> <output.pdf> [--chrome <path>] [--fallback]", file=sys.stderr)
         sys.exit(1)
 
-    success = build_cv(args[0], args[1], chrome_path)
-    sys.exit(0 if success else 1)
+    if fallback:
+        sys.exit(build_or_fallback(args[0], args[1], chrome_path))
+    sys.exit(0 if build_cv(args[0], args[1], chrome_path) else 1)
 
 
 if __name__ == "__main__":
