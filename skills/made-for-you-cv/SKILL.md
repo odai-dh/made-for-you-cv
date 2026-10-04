@@ -1,6 +1,6 @@
 ---
 name: made-for-you-cv
-description: Turn your own CV and a pasted job description into a tailored, designed, ATS-aware PDF CV (and an optional cover letter). Use when the user is applying for a job and wants a CV adapted to a specific posting, asks to "tailor my CV", "make a CV for this job", or wants a cover letter for a role. Three neutral templates, honest tailoring (never invents experience), and regional conventions for Sweden, the Nordics, the UK and the rest of Europe.
+description: "Tailor your CV or resume to a specific job and get a designed, ATS-aware PDF, plus a cover letter on request. Use whenever someone wants a CV, resume or résumé made, updated or adapted for a job: 'tailor my CV', 'update my resume for this role', 'apply for this job', 'job application', 'cover letter', 'personligt brev', 'anpassa mitt CV', 'skriv ett CV till den här tjänsten'. Works from an attached or pasted CV and a pasted job ad, and builds a reusable master CV on first use. Honest tailoring (never invents experience), a plain-text copy for web forms, and Swedish, Nordic and European conventions."
 ---
 
 # Made For You CV
@@ -13,9 +13,10 @@ Produce a tailored, professional, designed PDF CV from the user's own master CV 
 
 Trigger this skill when the user:
 - Says they're applying for a job and pastes or links a job description
-- Asks for a "CV", "resume", or "tailored CV" for a specific role
-- Asks for a cover letter for a specific role (CV + cover letter together)
-- Says something like "make me a CV for this", "tailor my CV for X", "I'm applying to Y"
+- Asks for a "CV", "resume" or "résumé" (new, updated or tailored) for a specific role
+- Asks for a cover letter or "personligt brev" for a specific role (CV + cover letter together)
+- Says something like "make me a CV for this", "tailor my CV for X", "update my resume for this role", "I'm applying to Y", "apply for this job", "anpassa mitt CV"
+- Attaches or pastes a CV together with a job ad, even with no instruction
 - Wants to set up their master CV for future applications
 
 Do not trigger this skill for:
@@ -24,7 +25,21 @@ Do not trigger this skill for:
 
 ## Workflow
 
-Follow these steps in order. Do not skip steps.
+Follow these steps in order. Do not skip steps. The aim is a first PDF in the user's first turn with as few questions as possible.
+
+### Fast path (check this first)
+
+If the user's first message already contains a CV (attached or pasted) **and** a job description:
+1. Build the master CV silently (step 0, no questions).
+2. Go straight to tailoring (steps 2 to 8) and deliver the PDF in the same turn. Do not stop after the master CV or after the step 4 summary.
+3. Use `minimal` (or `designer-accent` for a clearly design-led role). Do not ask about templates.
+4. After delivery, follow "After the first PDF" in step 8.
+
+**Questions before the first PDF.** Ask at most one short batch, and only for things that block it:
+- Only a CV given: build the master CV, then ask for the job ad in one sentence ("Paste the job ad (or a link) and I'll tailor it.").
+- Only a job ad given: ask for their CV in one sentence, any format ("Send your CV in any format: PDF, Word, a LinkedIn PDF export or pasted text.").
+- Neither given: ask for both in one message.
+Everything else (`[TODO]` fields, missing numbers, target title, work authorization) never blocks the first PDF. Leave unknown fields out (never invent them) and ask about them after delivery.
 
 ### Step 0: Find or create the user's master CV
 
@@ -35,17 +50,17 @@ The master CV is the single source of truth for everything that goes on a tailor
    - A master CV produced earlier in this conversation
    - Any CV the user attached (PDF, DOCX, TXT, MD) or pasted
 2. **If none exists, onboard the user:**
-   - Ask them to upload or paste their current CV (a LinkedIn "Save to PDF" export also works). One message, no long questionnaire.
+   - If no CV was given, ask for it in one sentence (a LinkedIn "Save to PDF" export also works), following the question rules above.
    - Convert it into the structure in `assets/master_cv_template.md`. Keep every fact; do not polish, invent, or drop anything at this stage. The master should hold *more* than any single CV will show.
-   - Ask, in one short batch, only for things that are missing and matter: target job title, location and willingness to relocate, work authorization (only if they're likely to apply across borders), and any real numbers behind their achievements (team size, users, revenue, lines of code, time saved). Mark anything still unknown with `[TODO]`.
-   - Save the result as `master_cv.md` and deliver it to the user. Tell them in one sentence to keep it (in a Claude Project, their folder, or just re-upload it) so future applications skip this step.
-3. If the master CV contains `[TODO]` markers in fields needed for the current application, surface them before generating. Either ask for the values or say clearly that those fields will be left out.
+   - Do not interview the user. Mark anything unknown or missing with `[TODO]` and carry on; those gaps are raised after the first PDF (step 8).
+   - Save the result as `master_cv.md` and deliver it to the user together with the PDF. Tell them in one sentence to keep it (in a Claude Project, their folder, or just re-upload it) so future applications skip this step.
+3. If the master CV contains `[TODO]` markers in fields needed for the current application, do not block on them: leave those fields out of the CV (never invent values) and list them after delivery.
 
 ### Step 1: Confirm inputs
 
-Before generating anything, confirm the user has provided:
+Before generating anything, make sure you have:
 1. A job description (pasted text is the default; if they give a URL, try to read it, and ask them to paste it if that fails)
-2. Optional: which template they want (minimal / two-column / designer-accent). If unspecified, ask once briefly. Default to `minimal` if they say "you pick".
+2. The template. Do not ask. If the user named one, use it. Otherwise default to `minimal`, or `designer-accent` for a clearly design-led role (design studio, creative or UX role, portfolio-driven). The user is told about the other templates after delivery (step 8).
    - **ATS caveat**: `two-column` places skills/contact in a sidebar, which many applicant tracking systems parse out of order or drop entirely. When the JD signals an ATS-likely pipeline (long, multi-section JD; large/enterprise company; explicit "apply through our portal"), steer toward a single-column template (`minimal` or `designer-accent`) and say why. Reserve `two-column` for clearly design-led or human-reviewed applications (small studios, design roles, direct-to-hiring-manager). If the user explicitly asks for two-column anyway, honor it but note the ATS risk once.
 3. Optional: whether they want a cover letter alongside. Do not generate one unless asked.
 
@@ -66,9 +81,9 @@ Following `references/job_parsing_guide.md`, produce an internal structured brea
 
 Output a brief summary to the user before any tailoring:
 
-> "This is a [archetype] role at [company], based in [location/region]. Must-haves: [3-4 key items]. Strongest matches from your background: [2-3 items]. Gaps to flag: [1-2 items, if any]. Going with the [chosen template], generating now."
+> "This is a [archetype] role at [company], based in [location/region]. Must-haves: [3-4 key items]. Strongest matches from your background: [2-3 items]. Gaps to flag: [1-2 items, if any]. Generating now."
 
-This gives the user a chance to redirect. Do not wait for explicit confirmation unless gaps are significant; proceed to step 5 in the same turn.
+This gives the user a chance to redirect. Do not wait for confirmation; proceed to step 5 in the same turn. Only pause if the gaps are so large that a tailored CV would be misleading, and then say so plainly.
 
 ### Step 5: Tailor the content
 
@@ -82,7 +97,13 @@ Following `references/cv_writing_guide.md`:
 
 ### Step 6: Populate the chosen template
 
-**Script paths.** `scripts/` and `assets/` below are relative to this skill's folder (the directory containing this SKILL.md), not the user's working directory. Resolve them to absolute paths before running anything, e.g. `${CLAUDE_PLUGIN_ROOT}/skills/made-for-you-cv/scripts/...` in Claude Code, or the skill's base directory elsewhere. Write working files to a scratch directory (the session's temp/scratchpad dir or `/tmp`), never into the skill folder.
+**Script paths.** `scripts/` and `assets/` are relative to this skill's folder (the directory containing this SKILL.md), never the user's working directory, so every command must use an absolute path. Shell variables may not survive between tool calls, so start each command with the `SKILL_DIR=` line below. Use the absolute path of this SKILL.md's folder if you know it; otherwise this finds it from any directory:
+
+```bash
+SKILL_DIR=$(dirname "$(dirname "$(find / -name fill_template.py -path '*made-for-you-cv*' -not -path '/proc/*' 2>/dev/null | head -1)")")
+```
+
+Write working files to a scratch directory (the session's temp/scratchpad dir or `/tmp`), never into the skill folder.
 
 The four templates live in `assets/templates/`:
 - `minimal`: single column, lots of whitespace, conservative (ATS-safe)
@@ -93,7 +114,7 @@ The four templates live in `assets/templates/`:
 Do not hand-edit the HTML. Write the tailored content to a JSON file and let `fill_template.py` do the substitution. It HTML-escapes plain fields, adds `https://` to URLs, derives the `*_DISPLAY` forms, and drops optional contact items and empty sections (no stray separators, no empty headings). It fails loudly on a missing required field or leftover `{{TOKEN}}`.
 
 ```bash
-python3 scripts/fill_template.py minimal /tmp/cv_data.json /tmp/cv_working.html
+python3 "$SKILL_DIR/scripts/fill_template.py" minimal /tmp/cv_data.json /tmp/cv_working.html
 ```
 
 JSON keys (all values are strings; omit or leave empty to drop an optional item):
@@ -137,13 +158,15 @@ The `tech` line, `<ul>` and sub-line are optional per entry (education usually h
 
 ### Step 7: Build the PDF
 
-Run the build script to convert the populated HTML to PDF:
+Run the build script with `--fallback` so a missing PDF engine never dead-ends the user. Use the `SKILL_DIR=` line from step 6 first:
 
 ```bash
-python3 scripts/build_cv.py /tmp/cv_working.html /tmp/cv_output.pdf
+python3 "$SKILL_DIR/scripts/build_cv.py" /tmp/cv_working.html /tmp/[FirstnameLastname]_CV_[Company]_[Role].pdf --fallback
 ```
 
-The script finds headless Chrome/Chromium (including Playwright's browser cache and root/container setups), then falls back to WeasyPrint, then Playwright, and prints install instructions if none is available (`--chrome <path>` points it at a specific binary). It refuses to build if placeholders are left over, reports the page count, and warns at 3+ pages; if so, return to step 5 and trim.
+The script finds headless Chrome/Chromium (including Playwright's browser cache and root/container setups), then falls back to WeasyPrint, then Playwright (`--chrome <path>` points it at a specific binary). It refuses to build if placeholders are left over, reports the page count, and warns at 3+ pages; if so, return to step 5 and trim.
+
+**Exit code 2 (no PDF engine, for example code execution is limited or no browser is installed).** Do not stop and do not ask the user to fix their setup. The script has already written the finished `.html` and a `.txt` next to the PDF path. Deliver those two files and say, in one sentence: "I couldn't make a PDF here, so open the HTML file in your browser and use Print, Save as PDF (A4, margins None); turning on code execution in your Claude settings lets me produce the PDF directly." Then continue as normal (summary, after-delivery list). If code execution is off entirely and you cannot run scripts at all, write the filled HTML yourself from the template and the same JSON values, and deliver it with a pasted plain-text version in the chat.
 
 Save the finished files where the user can get them: their working/connected folder or the session's outputs folder if one exists, otherwise present them as attachments. Intermediate files (JSON, HTML, PNG previews) stay in the scratch directory.
 
@@ -153,7 +176,7 @@ Filename convention for the final PDF:
 Also generate a plain-text version for ATS web forms, LinkedIn Easy Apply, and email bodies that don't accept a PDF:
 
 ```bash
-python3 scripts/html_to_text.py /tmp/cv_working.html /tmp/[FirstnameLastname]_CV_[Company]_[Role].txt
+python3 "$SKILL_DIR/scripts/html_to_text.py" /tmp/cv_working.html /tmp/[FirstnameLastname]_CV_[Company]_[Role].txt
 ```
 
 Present the `.txt` alongside the PDF. (For a cover letter, do the same.)
@@ -164,7 +187,7 @@ Before presenting the PDF, check:
 - **Page count**: 1 preferred, 2 acceptable. If 3+, return to step 5 and trim harder.
 - **Visual check**: render the PDF to PNG and look at it. This catches overflow, broken layout, and awkward page breaks that an HTML-only check misses:
   ```bash
-  python3 scripts/preview_cv.py /tmp/cv_output.pdf /tmp/cv_preview
+  python3 "$SKILL_DIR/scripts/preview_cv.py" /tmp/cv_output.pdf /tmp/cv_preview
   ```
   Then view `/tmp/cv_preview-1.png` (and `-2.png` if 2 pages). Fix the HTML and rebuild if anything is off.
 - **No leftover placeholders / empty sections**: `fill_template.py` and `build_cv.py` already enforce this; if you bypassed them, check by hand.
@@ -177,9 +200,15 @@ Present the files to the user. Briefly note, in plain prose:
 
 Offer to iterate. If the user shares new facts while iterating (a new job, a number, a skill), offer to add them to their master CV and deliver the updated `master_cv.md`.
 
+**After the first PDF** (and only after it is delivered), keep the message short and add:
+- One line about templates: "I used [template]. There are two other designs ([the other two]) if you want to see one."
+- If there are gaps (`[TODO]` fields, achievements without numbers, missing target title or work authorization): a short list headed "To make it stronger, tell me:" with at most 3 to 5 concrete items, such as "team size at [Company]" or "users or revenue behind [project]". Offer to update the CV and master CV when they answer.
+- If this was the first run, remind them in one sentence to keep `master_cv.md`.
+- Offer a cover letter in one short line. Do not write one unless they say yes.
+
 ## Cover Letters
 
-When (and only when) explicitly requested, follow `references/cover_letter_guide.md` to write a tailored cover letter. Fill the `cover-letter` template with `fill_template.py` (same header style as the CV), then build it with `build_cv.py` and export text with `html_to_text.py`. Filename: `[FirstnameLastname]_CoverLetter_[Company]_[Role].pdf`.
+When (and only when) explicitly requested, follow `references/cover_letter_guide.md` to write a tailored cover letter. Fill the `cover-letter` template with `fill_template.py` (same header style as the CV), then build it with `build_cv.py --fallback` and export text with `html_to_text.py`. If the user asked for a cover letter in their first message, deliver it in the same turn as the CV. Filename: `[FirstnameLastname]_CoverLetter_[Company]_[Role].pdf`.
 
 ## Style Constraints
 
@@ -211,13 +240,13 @@ Loaded only when a cover letter is requested. Structure, tone matching, and anti
 A worked end-to-end example with a fictional candidate (sample JD, parse, summary, finished CV), used as the quality bar.
 
 ### `scripts/fill_template.py`
-Fills a template from a JSON file (escaping, URL normalization, optional-item removal, required-field and leftover-token checks). Run as `python3 scripts/fill_template.py <template-name|path> <data.json> <output.html>`.
+Fills a template from a JSON file (escaping, URL normalization, optional-item removal, required-field and leftover-token checks). Run as `python3 "$SKILL_DIR/scripts/fill_template.py" <template-name|path> <data.json> <output.html>`.
 
 ### `scripts/build_cv.py`
-Converts a populated template HTML to PDF. Tries Chrome → WeasyPrint → Playwright and reports the page count. Run as `python3 scripts/build_cv.py <input.html> <output.pdf>`.
+Converts a populated template HTML to PDF. Tries Chrome → WeasyPrint → Playwright and reports the page count. With `--fallback`, if no engine exists it writes the HTML and `.txt` next to the PDF path and exits 2. Run as `python3 "$SKILL_DIR/scripts/build_cv.py" <input.html> <output.pdf> [--fallback] [--chrome <path>]`.
 
 ### `scripts/preview_cv.py`
-Renders a built PDF's pages to PNG for the visual check. Tries pdftoppm (all pages), then PyMuPDF/pypdfium2, then sips on macOS (first page). Run as `python3 scripts/preview_cv.py <input.pdf> [output_prefix]`.
+Renders a built PDF's pages to PNG for the visual check. Tries pdftoppm (all pages), then PyMuPDF/pypdfium2, then sips on macOS (first page). Run as `python3 "$SKILL_DIR/scripts/preview_cv.py" <input.pdf> [output_prefix]`.
 
 ### `scripts/html_to_text.py`
-Converts a populated CV/cover-letter HTML to clean plain text for ATS forms. Standard library only. Run as `python3 scripts/html_to_text.py <input.html> [output.txt]`.
+Converts a populated CV/cover-letter HTML to clean plain text for ATS forms. Standard library only. Run as `python3 "$SKILL_DIR/scripts/html_to_text.py" <input.html> [output.txt]`.

@@ -1,5 +1,23 @@
 # Made For You CV
 
+## Start in 10 seconds
+
+**Attach your CV, paste a job ad, and say: _Tailor my CV for this job._**
+
+You get a tailored, ATS-aware PDF CV (plus a plain-text copy for web forms) in one go. No setup, no questions first.
+
+Three prompts to try:
+
+- "Tailor my CV for this job and write a cover letter too: [paste job ad]" (with your CV attached)
+- "Anpassa mitt CV efter den här annonsen och skriv ett personligt brev: [klistra in annonsen]" (Swedish job ad, Swedish output)
+- "This is a design role at a small studio, use the two-column template: [paste job ad]"
+
+Prefer a command? Run `/made-for-you-cv:cv` and attach your CV and the ad.
+
+Found a bug or have an idea? [Open an issue on GitHub](https://github.com/odai-dh/made-for-you-cv/issues).
+
+---
+
 A Claude plugin that turns **your own CV** and **a job posting** into a tailored, designed PDF CV, plus an optional cover letter.
 
 - **Honest tailoring**: reorders, reframes and selects from your real experience. It never invents skills, numbers or titles, and it flags gaps instead.
@@ -11,15 +29,15 @@ A Claude plugin that turns **your own CV** and **a job posting** into a tailored
 ## How to use
 
 1. Install the plugin and start a chat.
-2. Say "I'm applying for this job" and paste the job description.
-3. The first time, Claude asks for your current CV (PDF, Word, text or a LinkedIn PDF export) and turns it into a reusable `master_cv.md`. Keep that file and attach it next time to skip this step.
-4. Pick a template (or let Claude pick), and you get a PDF + a plain-text version.
+2. Attach your current CV (PDF, Word, text or a LinkedIn PDF export) and paste the job ad.
+3. Claude builds a reusable `master_cv.md` behind the scenes, tailors it, and hands you the PDF and a plain-text version. It uses the `minimal` template by default (`designer-accent` for clearly design-led roles) and tells you about the other two afterwards.
+4. After the first PDF it lists a few things you could tell it to make the CV stronger. Keep `master_cv.md` and attach it next time to skip the CV upload.
 
-You can also run the slash command `/made-for-you-cv:cv` and paste the posting after it.
+If your environment can't make PDFs (for example code execution is off), you still get the finished HTML and a text version: open the HTML and use Print, Save as PDF.
 
 Example prompts:
 
-- "Tailor my CV for this Frontend Engineer role at [company]: [paste JD]"
+- "Update my resume for this Frontend Engineer role at [company]: [paste JD]"
 - "Make a CV and a cover letter for this posting, two-column template."
 - "Set up my master CV" (attach your current CV)
 
@@ -32,7 +50,7 @@ Example prompts:
 ## Development
 
 ```
-python3 tests/smoke_test.py          # fills and builds every template, checks page count and edge cases
+python3 tests/smoke_test.py          # fills and builds every template, checks page count, edge cases and the no-PDF-engine fallback
 claude plugin validate .             # manifest check
 ```
 

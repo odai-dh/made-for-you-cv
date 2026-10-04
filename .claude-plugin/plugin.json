@@ -1,8 +1,8 @@
 {
   "name": "made-for-you-cv",
   "displayName": "Made For You CV",
-  "version": "0.2.2",
-  "description": "Turn your CV and a job posting into a tailored, designed, ATS-aware PDF CV and optional cover letter. Honest tailoring, three neutral templates, Swedish/Nordic and European CV conventions.",
+  "version": "0.3.0",
+  "description": "Attach your CV, paste a job ad, get a tailored, ATS-aware PDF CV (and cover letter) in one go.",
   "author": {
     "name": "Odai Dahi",
     "url": "https://odaidh.dev"
@@ -21,5 +21,6 @@
   ],
   "privacyPolicyUrl": "https://github.com/odai-dh/made-for-you-cv/blob/main/PRIVACY.md",
   "documentationUrl": "https://github.com/odai-dh/made-for-you-cv#readme",
-  "supportUrl": "https://github.com/odai-dh/made-for-you-cv/issues"
+  "supportUrl": "https://github.com/odai-dh/made-for-you-cv/issues",
+  "icon": "./.claude-plugin/icon.png"
 }

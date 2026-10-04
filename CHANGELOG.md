@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+First-run activation. Honesty rules, templates and privacy behavior are unchanged.
+- Skill description rewritten so it triggers on common phrasings (CV, resume, résumé, cover letter, job application, "apply for this job", "tailor my CV", "update my resume for this role", Swedish "personligt brev" and "anpassa mitt CV").
+- New fast path: a first message with a CV and a job ad now produces the PDF in the same turn. The master CV is built silently, the template defaults to `minimal` (`designer-accent` for design-led roles) with no template question, and at most one short batch of blocking questions is asked. Gaps (`[TODO]` fields, missing numbers) are listed after the first PDF instead of before it.
+- No dead ends: `build_cv.py --fallback` writes the finished HTML and a `.txt` (exit code 2) when no PDF engine is available, and SKILL.md tells the user to use Print, Save as PDF. Every script call in SKILL.md now uses an absolute `SKILL_DIR` path that works from any working directory.
+- README starts with "Start in 10 seconds", example prompts (including Swedish) and a feedback link. `/made-for-you-cv:cv` handles the fast path and works with no arguments.
+- `plugin.json`: description leads with the action; add `icon` (`.claude-plugin/icon.png`).
+- Smoke test covers the no-PDF-engine fallback (simulated) and the frontmatter limits.
+
 ## 0.2.2
 - `build_cv.py` no longer reads any environment variables. `CHROME_PATH`, `CHROME_NO_SANDBOX` and `PLAYWRIGHT_BROWSERS_PATH` are removed. Use the optional `--chrome <path>` argument to pick a browser binary; `--no-sandbox` is used only when running as root; Playwright's browser cache is searched in fixed folders only.
 - Audited the repo for other environment, credential, token and network access: none in scripts, tests, commands or docs.
