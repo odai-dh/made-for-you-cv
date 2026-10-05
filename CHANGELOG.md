@@ -6,9 +6,10 @@ Fixes two bugs from a side-by-side eval against plain Claude, makes runs leaner,
 - **New: `SECTION_ORDER`** puts education and projects before experience for career switchers and recent graduates.
 - **New: Word output.** `build_docx.py` makes a single-column .docx (standard headings, real bullets, no tables, text boxes, images or headers/footers) from the same JSON, for portals and recruitment systems. The skill delivers it when the ad points to a portal or ATS, or when asked. It installs python-docx once if missing and skips with a one-line note if it cannot.
 - **New: `--fit`** in `build_cv.py` rebuilds an over-length CV with tighter spacing, margins and slightly smaller type (body text never below 9.5pt) and reports what it did, so the skill only cuts content when that is not enough.
-- **Leaner skill.** SKILL.md is about half its previous size. Detail moved into `references/` (new `template_data.md`) and references load only when needed: the cover-letter guide only for a cover letter, the example only when unsure.
+- **One call to deliverables.** New `make_cv.py` fills the template, builds the PDF (with `--fit` and the no-engine fallback), writes the `.txt` and, with `--docx`, the Word copy. It replaces five separate script calls in a run.
+- **Leaner skill.** SKILL.md is about half its previous size on disk and needs fewer reference reads (the data keys are inline, the master CV sections are listed in step 0, and PNG previews are only taken when needed). Detail moved into `references/` (new `template_data.md`) and references load only when needed: the cover-letter guide only for a cover letter, the example only when unsure.
 - **New: repeat-application fast path.** With a `master_cv.md` attached or already in the conversation, a new job ad goes straight to the tailored PDF with no questions (also in `/made-for-you-cv:cv`).
-- Smoke test covers Swedish headings, `SECTION_ORDER`, the .docx, and `--fit`. New `tests/evals/` holds three fictional cases and their checks.
+- Smoke test covers Swedish headings, `SECTION_ORDER`, the .docx, `--fit` and `make_cv.py`. New `tests/evals/` holds three fictional cases, an objective checker and the plugin-vs-plain-Claude results.
 
 ## 0.3.0
 First-run activation. Honesty rules, templates and privacy behavior are unchanged.

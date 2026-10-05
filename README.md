@@ -57,7 +57,7 @@ python3 tests/smoke_test.py          # (needs python-docx for the Word checks) f
 claude plugin validate .             # manifest check
 ```
 
-`scripts/fill_template.py` fills a template from JSON, `build_cv.py` renders the PDF (`--fit`, `--fallback`), `build_docx.py` makes the Word copy, `html_to_text.py` makes the ATS plain-text copy, `preview_cv.py` renders PNGs for the visual check.
+`scripts/make_cv.py` runs everything in one call (fill, PDF, text, Word). Underneath: `scripts/fill_template.py` fills a template from JSON, `build_cv.py` renders the PDF (`--fit`, `--fallback`), `build_docx.py` makes the Word copy, `html_to_text.py` makes the ATS plain-text copy, `preview_cv.py` renders PNGs for the visual check.
 
 ## Privacy
 
@@ -82,7 +82,7 @@ skills/made-for-you-cv/
   assets/master_cv_template.md
   assets/templates/{minimal,two-column,designer-accent,cover-letter}.html
   references/  (tailoring, JD parsing, cover letter, worked example)
-  scripts/     (fill_template.py, build_cv.py, build_docx.py, preview_cv.py, html_to_text.py, cv_common.py)
+  scripts/     (make_cv.py, fill_template.py, build_cv.py, build_docx.py, preview_cv.py, html_to_text.py, cv_common.py)
 tests/         (smoke test, fictional sample data, evals/)
 ```
 

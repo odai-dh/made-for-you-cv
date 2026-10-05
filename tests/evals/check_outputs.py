@@ -54,6 +54,7 @@ def collapse_spaced(text):
     return "\n".join(out)
 
 
+NEGATION_RE = re.compile(r"\b(inte|aldrig|saknar|utan|ingen|inget|not|never|no|without|lack|haven't|don't|hasn't)\b", re.I)
 APPLICATION_RE = re.compile(r"(ansökan|söker|sökande|application|applying)\s+(till|to|for|som)?\s*$", re.I)
 
 
@@ -107,8 +108,12 @@ def run(case_dir, outputs):
         if re.search(re.escape(skill), cv_text, re.I):
             invented.append(skill)
         letter = texts.get("letter", "")
-        if re.search(r"(erfarenhet av|arbetat med|använt|använder|kunskaper i|experience (with|of|in)|worked with|skilled in)\s+" + re.escape(skill), letter, re.I):
-            invented.append(f"{skill} (claimed in letter)")
+        claim = re.compile(r"(erfarenhet av|arbetat (med|i)|använt|använder|kunskaper i|experience (with|of|in)|worked (with|in)|skilled in)\s+" + re.escape(skill), re.I)
+        for m in claim.finditer(letter):
+            before = letter[max(0, m.start() - 60):m.start()].lower()
+            # "Jag har inte arbetat med X" / "no experience of X" are honest gap statements, not claims.
+            if not NEGATION_RE.search(before):
+                invented.append(f"{skill} (claimed in letter)")
     check("no invented skills " + "/".join(case["forbidden_skills"]), not invented, str(invented))
 
     header = "\n".join([l for l in cv_text.splitlines() if l.strip()][:4])
