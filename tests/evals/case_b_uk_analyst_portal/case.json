@@ -1,0 +1,13 @@
+{
+  "name": "b_uk_analyst_portal",
+  "description": "UK data analyst whose CV contains DOB, marital status, nationality, photo note and a full street address, applying for a senior role at a large insurer through a careers portal (ATS).",
+  "lang": "en",
+  "pages": [1, 2],
+  "forbidden_personal": ["14 March 1993", "14/03/1993", "1993", "Married", "marital", "two children", "Fernleigh", "LS8", "passport", "photo", "Nationality"],
+  "forbidden_skills": ["Synapse"],
+  "header_title_must_not_match": ["Senior", "Lead", "Principal", "Head of"],
+  "must_keywords": ["SQL", "Tableau", "Power BI", "stakeholder"],
+  "expect_docx": true,
+  "expect_cover_letter": false,
+  "swedish_headings": false
+}

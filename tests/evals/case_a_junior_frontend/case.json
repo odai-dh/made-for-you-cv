@@ -1,0 +1,13 @@
+{
+  "name": "a_junior_frontend",
+  "description": "Junior frontend developer in Stockholm applying for a React/TypeScript role at a fintech. English ad, English CV.",
+  "lang": "en",
+  "pages": [1, 2],
+  "forbidden_personal": [],
+  "forbidden_skills": ["Playwright"],
+  "header_title_must_not_match": ["Senior", "Lead", "Principal", "Staff"],
+  "must_keywords": ["React", "TypeScript", "REST", "test"],
+  "expect_docx": false,
+  "expect_cover_letter": false,
+  "swedish_headings": false
+}

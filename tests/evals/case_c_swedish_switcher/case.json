@@ -1,0 +1,14 @@
+{
+  "name": "c_swedish_switcher",
+  "description": "Swedish career switcher (restaurant manager plus a short Customer Success course and an internship) with personnummer and street address in the CV, applying in Swedish for a CSM role that requires 3+ years of B2B SaaS and Salesforce. Asks for CV and personligt brev.",
+  "lang": "sv",
+  "pages": [1, 2],
+  "forbidden_personal": ["900101", "Personnummer", "Storgatan", "lgh 1101", "123 45"],
+  "forbidden_skills": ["Salesforce"],
+  "header_title_must_not_match": ["Customer Success Manager"],
+  "must_keywords": ["Customer Success", "onboarding", "Zendesk", "kundmöten"],
+  "expect_docx": false,
+  "expect_cover_letter": true,
+  "cover_letter_words": [250, 400],
+  "swedish_headings": true
+}
