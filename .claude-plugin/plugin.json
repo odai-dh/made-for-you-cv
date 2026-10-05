@@ -1,7 +1,7 @@
 {
   "name": "made-for-you-cv",
   "displayName": "Made For You CV",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Attach your CV, paste a job ad, get a tailored, ATS-aware PDF CV (and cover letter) in one go.",
   "author": {
     "name": "Odai Dahi",

@@ -29,6 +29,15 @@ What it does for you:
   - Optional items (<!--IF:TOKEN-->...<!--/IF:TOKEN-->) are removed when that
     token is empty or missing, including their separators, so there are no
     empty headings or stray "·" characters.
+  - LANG (en, sv, da, nb, de, nl, fr; default en) sets the section headings
+    (Profil, Erfarenhet, Utbildning, ...) and the document language. Any heading
+    can be overridden with H_EXPERIENCE, H_EDUCATION, etc.
+  - SECTION_ORDER ("education,projects,experience" or a JSON list) moves
+    sections; unnamed sections keep their default order after the named ones.
+    Reorders experience, projects and education (and skills and languages in
+    single-column templates). Good for career switchers and recent graduates.
+  - Cover letters: DATE may be empty (today) or ISO (2026-10-05); it is written
+    out in the LANG format (5 oktober 2026, 5. Oktober 2026, 5 October 2026).
   - Fails (exit 1) if a required field is missing or any {{TOKEN}} is left over.
 
 Standard library only.
@@ -40,11 +49,14 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cv_common
+
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "assets" / "templates"
 
 REQUIRED = {
     "cv": ["NAME", "TITLE", "EMAIL", "SUMMARY", "EXPERIENCE_BLOCK"],
-    "cover-letter": ["NAME", "EMAIL", "DATE", "SALUTATION", "BODY", "CLOSING"],
+    "cover-letter": ["NAME", "EMAIL", "SALUTATION", "BODY", "CLOSING"],
 }
 
 URL_FIELDS = ["PORTFOLIO", "GITHUB", "LINKEDIN"]
@@ -67,7 +79,9 @@ def normalize(data):
     for k, v in data.items():
         if v is None:
             v = ""
-        if not isinstance(v, str):
+        if isinstance(v, (list, tuple)):
+            v = ",".join(str(x) for x in v)
+        elif not isinstance(v, str):
             v = str(v)
         out[k] = v.strip()
     for k, v in DEFAULTS.items():
@@ -79,7 +93,32 @@ def normalize(data):
         out[f] = url
         if url and not out.get(f + "_DISPLAY"):
             out[f + "_DISPLAY"] = display_url(url)
+    code, known = cv_common.normalize_lang(out.get("LANG"))
+    if not known:
+        print(f"⚠️  LANG '{out.get('LANG')}' has no built-in headings; using English. "
+              "Pass H_EXPERIENCE, H_EDUCATION, ... to set them.", file=sys.stderr)
+    out["LANG"] = code
+    for k, v in cv_common.labels_for(code).items():
+        out.setdefault(k, v)
+    if "DATE" in out or "SALUTATION" in out:  # cover letter
+        out["DATE"] = cv_common.localize_date(out.get("DATE", ""), code)
     return out
+
+
+def reorder_sections(text, order_value):
+    """Reorder contiguous <!--SECTION:x-->...<!--/SECTION:x--> blocks per SECTION_ORDER."""
+    pat = re.compile(r"<!--SECTION:([a-z]+)-->.*?<!--/SECTION:\1-->", re.S)
+    blocks = list(pat.finditer(text))
+    if not blocks or not cv_common.parse_order(order_value):
+        return text
+    by_name = {m.group(1): m.group(0) for m in blocks}
+    wanted = [n for n in cv_common.full_order(order_value) if n in by_name]
+    start, end = blocks[0].start(), blocks[-1].end()
+    # Only reorder if the blocks are contiguous (only whitespace between them).
+    for a, b in zip(blocks, blocks[1:]):
+        if text[a.end():b.start()].strip():
+            return text
+    return text[:start] + "\n\n".join(by_name[n] for n in wanted) + text[end:]
 
 
 def render_value(key, value):
@@ -135,6 +174,7 @@ def fill(template_path, data):
         data.setdefault("SIDEBAR_SKILLS_BLOCK", data.get("SKILLS_BLOCK", ""))
         data.setdefault("SIDEBAR_LANGUAGES_BLOCK", data.get("LANGUAGES_BLOCK", ""))
 
+    text = reorder_sections(text, data.get("SECTION_ORDER", ""))
     text = strip_empty_ifs(text, data)
     text = tidy_contact(text)
 
@@ -143,7 +183,7 @@ def fill(template_path, data):
         return render_value(key, data.get(key, ""))
 
     text = re.sub(r"\{\{([A-Z_]+)\}\}", sub, text)
-    text = re.sub(r"<!--/?(?:IF:[A-Z_]+|CONTACT)-->", "", text)
+    text = re.sub(r"<!--/?(?:IF:[A-Z_]+|SECTION:[a-z]+|CONTACT)-->", "", text)
     return text, kind
 
 

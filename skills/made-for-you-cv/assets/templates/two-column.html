@@ -83,7 +83,7 @@
     <h1>{{NAME}}</h1>
     <div class="role">{{TITLE}}</div>
 
-    <h2>Contact</h2>
+    <h2>{{H_CONTACT}}</h2>
     <!--IF:LOCATION--><div class="contact-item">{{LOCATION}}</div><!--/IF:LOCATION-->
     <!--IF:EMAIL--><div class="contact-item"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a></div><!--/IF:EMAIL-->
     <!--IF:PHONE--><div class="contact-item">{{PHONE}}</div><!--/IF:PHONE-->
@@ -92,40 +92,40 @@
     <!--IF:GITHUB--><div class="contact-item"><a href="{{GITHUB}}">{{GITHUB_DISPLAY}}</a></div><!--/IF:GITHUB-->
 
     <!--IF:SIDEBAR_SKILLS_BLOCK-->
-    <h2>Skills</h2>
+    <h2>{{H_SKILLS}}</h2>
     {{SIDEBAR_SKILLS_BLOCK}}
     <!--/IF:SIDEBAR_SKILLS_BLOCK-->
 
     <!--IF:SIDEBAR_LANGUAGES_BLOCK-->
-    <h2>Languages</h2>
+    <h2>{{H_LANGUAGES}}</h2>
     <div class="languages-list">{{SIDEBAR_LANGUAGES_BLOCK}}</div>
     <!--/IF:SIDEBAR_LANGUAGES_BLOCK-->
   </aside>
 
   <main class="main">
     <section class="summary">
-      <h2>Profile</h2>
+      <h2>{{H_PROFILE}}</h2>
       {{SUMMARY}}
     </section>
 
-    <section>
-      <h2>Experience</h2>
+    <!--SECTION:experience--><section>
+      <h2>{{H_EXPERIENCE}}</h2>
       {{EXPERIENCE_BLOCK}}
-    </section>
+    </section><!--/SECTION:experience-->
 
-    <!--IF:PROJECTS_BLOCK-->
+    <!--SECTION:projects--><!--IF:PROJECTS_BLOCK-->
     <section>
-      <h2>Projects</h2>
+      <h2>{{H_PROJECTS}}</h2>
       {{PROJECTS_BLOCK}}
     </section>
-    <!--/IF:PROJECTS_BLOCK-->
+    <!--/IF:PROJECTS_BLOCK--><!--/SECTION:projects-->
 
-    <!--IF:EDUCATION_BLOCK-->
+    <!--SECTION:education--><!--IF:EDUCATION_BLOCK-->
     <section>
-      <h2>Education</h2>
+      <h2>{{H_EDUCATION}}</h2>
       {{EDUCATION_BLOCK}}
     </section>
-    <!--/IF:EDUCATION_BLOCK-->
+    <!--/IF:EDUCATION_BLOCK--><!--/SECTION:education-->
   </main>
 </div>
 </td></tr></tbody>

@@ -4,7 +4,7 @@
 
 **Attach your CV, paste a job ad, and say: _Tailor my CV for this job._**
 
-You get a tailored, ATS-aware PDF CV (plus a plain-text copy for web forms) in one go. No setup, no questions first.
+You get a tailored, ATS-aware PDF CV (plus a plain-text copy for web forms, and a Word copy for careers portals) in one go. No setup, no questions first. Next time, attach the `master_cv.md` it gave you and a new job ad goes straight to the PDF.
 
 Three prompts to try:
 
@@ -24,7 +24,9 @@ A Claude plugin that turns **your own CV** and **a job posting** into a tailored
 - **ATS-aware**: steers you to single-column layouts when the employer probably uses an applicant tracking system, checks keyword coverage against the posting's must-haves, and gives you a plain-text copy for web forms.
 - **Three neutral A4 CV templates** (`minimal`, `two-column`, `designer-accent`) plus a matching cover-letter template.
 - **Regional conventions**: Sweden/Nordics, UK, Netherlands, Germany and the rest of Europe (photos, birthdates, ID numbers, length, tone).
-- **Cover letters on request**, in the posting's language.
+- **Cover letters on request**, in the posting's language, with section headings and dates in that language too (English, Swedish, Danish, Norwegian, German, Dutch, French).
+- **Word (.docx) copy** for recruitment portals, built as a plain single column so systems parse it cleanly.
+- **Fits on one page**: a CV that runs slightly over is tightened automatically before any content is cut.
 
 ## How to use
 
@@ -44,17 +46,18 @@ Example prompts:
 ## Requirements
 
 - Code execution must be enabled (Claude builds the PDF with small Python scripts). Python 3.8+, standard library only.
+- Optional: `python-docx` for the Word copy (installed automatically if possible, skipped with a note if not).
 - One PDF renderer: Google Chrome / Chromium / Edge (found automatically, including Playwright's browser cache and root/Docker setups), or `pip install weasyprint`, or Playwright. Pass `--chrome <path>` to `build_cv.py` to use a specific binary.
 - Optional, for the visual check: `pdftoppm` (poppler) or `pip install pymupdf`.
 
 ## Development
 
 ```
-python3 tests/smoke_test.py          # fills and builds every template, checks page count, edge cases and the no-PDF-engine fallback
+python3 tests/smoke_test.py          # (needs python-docx for the Word checks) fills and builds every template, checks page count, edge cases and the no-PDF-engine fallback
 claude plugin validate .             # manifest check
 ```
 
-`scripts/fill_template.py` fills a template from JSON, `build_cv.py` renders the PDF, `html_to_text.py` makes the ATS plain-text copy, `preview_cv.py` renders PNGs for the visual check.
+`scripts/make_cv.py` runs everything in one call (fill, PDF, text, Word). Underneath: `scripts/fill_template.py` fills a template from JSON, `build_cv.py` renders the PDF (`--fit`, `--fallback`), `build_docx.py` makes the Word copy, `html_to_text.py` makes the ATS plain-text copy, `preview_cv.py` renders PNGs for the visual check.
 
 ## Privacy
 
@@ -79,8 +82,8 @@ skills/made-for-you-cv/
   assets/master_cv_template.md
   assets/templates/{minimal,two-column,designer-accent,cover-letter}.html
   references/  (tailoring, JD parsing, cover letter, worked example)
-  scripts/     (fill_template.py, build_cv.py, preview_cv.py, html_to_text.py)
-tests/         (smoke test + fictional sample data)
+  scripts/     (make_cv.py, fill_template.py, build_cv.py, build_docx.py, preview_cv.py, html_to_text.py, cv_common.py)
+tests/         (smoke test, fictional sample data, evals/)
 ```
 
 ## License

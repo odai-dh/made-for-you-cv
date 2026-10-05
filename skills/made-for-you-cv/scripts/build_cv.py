@@ -3,7 +3,12 @@
 build_cv.py — Convert a populated CV HTML file to a print-ready PDF.
 
 Usage:
-    build_cv.py <input.html> <output.pdf> [--chrome <path-to-chrome>] [--fallback]
+    build_cv.py <input.html> <output.pdf> [--chrome <path-to-chrome>] [--fallback] [--fit [pages]]
+
+--fit [pages]: if the CV runs over the target (default 1 page), rebuild with
+progressively tighter spacing, margins and slightly smaller type (body text never
+below 9.5pt), up to 3 steps, and report what was done. If it still does not fit,
+it says so and the content has to be cut. The HTML on disk is not modified.
 
 Exit codes:
     0  PDF built
@@ -223,8 +228,86 @@ def report_page_count(output_pdf):
 
 NO_ENGINE = {"flag": False}
 
+# Progressively tighter layouts for --fit. Body text is never reduced below 9.5pt.
+FIT_STEPS = [
+    dict(name="tighter spacing", lh=1.35, entry=6, section=8, li=1.0, margin=0.9, font=1.0),
+    dict(name="tighter spacing and margins, type -5%", lh=1.3, entry=5, section=7, li=0.5, margin=0.8, font=0.95),
+    dict(name="tightest spacing, type -10%", lh=1.25, entry=4, section=6, li=0.0, margin=0.7, font=0.9),
+]
+MIN_BODY_PT = 9.5
 
-def build_cv(input_html, output_pdf, chrome_path=None):
+
+def tighten_html(text, step):
+    """Return text with tighter spacing/margins/type applied (see FIT_STEPS)."""
+    def scale_font(m):
+        v = float(m.group(1))
+        # Only sizes at or above the body floor shrink, and never below it.
+        new = v if v < MIN_BODY_PT else max(MIN_BODY_PT, round(v * step["font"] * 2) / 2)
+        return f"font-size: {new:g}pt"
+
+    text = re.sub(r"font-size:\s*([\d.]+)pt", scale_font, text)
+
+    def scale_margin(m):
+        vals = [float(x) for x in re.findall(r"[\d.]+(?=mm)", m.group(2))]
+        if not vals or all(v == 0 for v in vals):
+            return m.group(0)
+        scaled = " ".join(f"{round(v * step['margin'], 1):g}mm" if v else "0" for v in vals)
+        return f"{m.group(1)}margin: {scaled}"
+
+    text = re.sub(r"(@page\s*\{[^}]*?)margin:\s*([^;]+)", scale_margin, text)
+    css = (
+        "<style>"
+        f"html,body{{line-height:{step['lh']}!important}}"
+        f".entry{{margin-bottom:{step['entry']}pt!important}}"
+        f"section,.main section{{margin-bottom:{step['section']}pt!important}}"
+        f".entry li{{margin-bottom:{step['li']}pt!important}}"
+        ".frame .spacer{height:9mm!important}"
+        "</style>"
+    )
+    return text.replace("</head>", css + "\n</head>", 1)
+
+
+def render_pdf(input_html, output_pdf, chrome_path=None):
+    """Try each engine in turn. Returns the engine name, or None."""
+    print("  Trying headless Chrome...")
+    if try_chrome(input_html, output_pdf, chrome_path):
+        return "Chrome"
+    print("  Trying WeasyPrint...")
+    if try_weasyprint(input_html, output_pdf):
+        return "WeasyPrint"
+    print("  Trying Playwright...")
+    if try_playwright(input_html, output_pdf):
+        return "Playwright"
+    return None
+
+
+def fit_to_pages(input_html, output_pdf, chrome_path, target):
+    """Rebuild with tighter layouts until the PDF is <= target pages. Returns final page count."""
+    pages = count_pages(output_pdf)
+    if pages is None or pages <= target:
+        return pages
+    original = Path(input_html).read_text(encoding="utf-8")
+    print(f"  Fit: {pages} pages, target {target}. Tightening layout...")
+    for i, step in enumerate(FIT_STEPS, start=1):
+        with tempfile.TemporaryDirectory(prefix="cv-fit-") as tmp:
+            tight = Path(tmp) / "fit.html"
+            tight.write_text(tighten_html(original, step), encoding="utf-8")
+            if render_pdf(tight, output_pdf, chrome_path) is None:
+                break
+        pages = count_pages(output_pdf)
+        print(f"  Fit step {i}/{len(FIT_STEPS)} ({step['name']}): {pages} page(s)")
+        if pages is not None and pages <= target:
+            print(f"✅ Fit to {pages} page(s) with {step['name']}; body text kept at or above {MIN_BODY_PT}pt.")
+            return pages
+    print(
+        f"⚠️  Still {pages} pages after the tightest layout. Cut content (least relevant "
+        "items first) instead of shrinking further, then rebuild.",
+        file=sys.stderr,
+    )
+    return pages
+
+
+def build_cv(input_html, output_pdf, chrome_path=None, fit=None):
     NO_ENGINE["flag"] = False
     input_html = Path(input_html)
     output_pdf = Path(output_pdf)
@@ -243,26 +326,15 @@ def build_cv(input_html, output_pdf, chrome_path=None):
         return False
 
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
-
     print(f"Building PDF: {input_html.name} → {output_pdf.name}")
 
     # Chrome first: reliably present on macOS and avoids WeasyPrint's noisy
     # native-lib import warnings when its system deps aren't installed.
-    print("  Trying headless Chrome...")
-    if try_chrome(input_html, output_pdf, chrome_path):
-        print(f"✅ Rendered with Chrome: {output_pdf}")
-        report_page_count(output_pdf)
-        return True
-
-    print("  Trying WeasyPrint...")
-    if try_weasyprint(input_html, output_pdf):
-        print(f"✅ Rendered with WeasyPrint: {output_pdf}")
-        report_page_count(output_pdf)
-        return True
-
-    print("  Trying Playwright...")
-    if try_playwright(input_html, output_pdf):
-        print(f"✅ Rendered with Playwright: {output_pdf}")
+    engine = render_pdf(input_html, output_pdf, chrome_path)
+    if engine:
+        print(f"✅ Rendered with {engine}: {output_pdf}")
+        if fit:
+            fit_to_pages(input_html, output_pdf, chrome_path, fit)
         report_page_count(output_pdf)
         return True
 
@@ -297,9 +369,9 @@ def write_fallback(input_html, output_pdf):
     return html_out, txt_out
 
 
-def build_or_fallback(input_html, output_pdf, chrome_path=None):
+def build_or_fallback(input_html, output_pdf, chrome_path=None, fit=None):
     """Returns 0 (PDF built), 2 (HTML + text fallback written) or 1 (error)."""
-    if build_cv(input_html, output_pdf, chrome_path):
+    if build_cv(input_html, output_pdf, chrome_path, fit):
         return 0
     if not NO_ENGINE["flag"]:
         return 1
@@ -312,6 +384,15 @@ def main():
     fallback = "--fallback" in args
     if fallback:
         args.remove("--fallback")
+    fit = None
+    if "--fit" in args:
+        i = args.index("--fit")
+        fit = 1
+        if i + 1 < len(args) and args[i + 1].isdigit():
+            fit = int(args[i + 1])
+            del args[i:i + 2]
+        else:
+            del args[i]
     chrome_path = None
     if "--chrome" in args:
         i = args.index("--chrome")
@@ -321,12 +402,12 @@ def main():
         chrome_path = args[i + 1]
         del args[i:i + 2]
     if len(args) != 2:
-        print("Usage: build_cv.py <input.html> <output.pdf> [--chrome <path>] [--fallback]", file=sys.stderr)
+        print("Usage: build_cv.py <input.html> <output.pdf> [--chrome <path>] [--fallback] [--fit [pages]]", file=sys.stderr)
         sys.exit(1)
 
     if fallback:
-        sys.exit(build_or_fallback(args[0], args[1], chrome_path))
-    sys.exit(0 if build_cv(args[0], args[1], chrome_path) else 1)
+        sys.exit(build_or_fallback(args[0], args[1], chrome_path, fit))
+    sys.exit(0 if build_cv(args[0], args[1], chrome_path, fit) else 1)
 
 
 if __name__ == "__main__":

@@ -8,5 +8,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install python-docx (for the Word checks)
+        run: pip install python-docx
       - name: Smoke test (Chrome is preinstalled on ubuntu-latest)
         run: python3 tests/smoke_test.py
