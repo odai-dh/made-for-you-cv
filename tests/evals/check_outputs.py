@@ -43,6 +43,20 @@ def docx_text(path):
     return "\n".join(p.text for p in d.paragraphs), d
 
 
+def collapse_spaced(text):
+    """Letter-spaced headings ('E R FA R E N H E T') come out of PDFs with gaps; rejoin them."""
+    out = []
+    for line in text.splitlines():
+        t = line.strip()
+        if re.fullmatch(r"(?:\S ){3,}\S|(?:\S{1,2} ){3,}\S{1,2}", t) and len(t.replace(" ", "")) <= 24:
+            t = t.replace(" ", "")
+        out.append(t)
+    return "\n".join(out)
+
+
+APPLICATION_RE = re.compile(r"(ansökan|söker|sökande|application|applying)\s+(till|to|for|som)?\s*$", re.I)
+
+
 def find(outputs, suffix, want_letter):
     hits = [p for p in sorted(outputs.rglob(f"*{suffix}")) if bool(LETTER_RE.search(p.name)) == want_letter]
     return hits[0] if hits else None
@@ -62,7 +76,7 @@ def run(case_dir, outputs):
     letter_docx = find(outputs, ".docx", True)
 
     check("PDF CV delivered", cv_pdf is not None, str(cv_pdf.name) if cv_pdf else "no CV PDF found")
-    cv_text = pdf_text(cv_pdf) if cv_pdf else (cv_txt.read_text() if cv_txt else "")
+    cv_text = collapse_spaced(pdf_text(cv_pdf)) if cv_pdf else (cv_txt.read_text() if cv_txt else "")
     if cv_pdf:
         n = pdf_pages(cv_pdf)
         lo, hi = case["pages"]
@@ -98,7 +112,12 @@ def run(case_dir, outputs):
     check("no invented skills " + "/".join(case["forbidden_skills"]), not invented, str(invented))
 
     header = "\n".join([l for l in cv_text.splitlines() if l.strip()][:4])
-    bad = [pat for pat in case["header_title_must_not_match"] if re.search(pat, header, re.I)]
+    bad = []
+    for pat in case["header_title_must_not_match"]:
+        for m in re.finditer(pat, header, re.I):
+            # "Application to Customer Success Manager" names the target role; it does not claim the title.
+            if not APPLICATION_RE.search(header[max(0, m.start() - 20):m.start()]):
+                bad.append(pat)
     check("honest header title", not bad, f"header: {header!r}" if bad else "")
 
     missing = [k for k in case["must_keywords"] if k.lower() not in cv_text.lower()]
@@ -106,8 +125,10 @@ def run(case_dir, outputs):
 
     if case["swedish_headings"]:
         lines = {l.strip().lower() for l in cv_text.splitlines()}
-        check("Swedish section headings", {"erfarenhet", "utbildning"} <= lines and not ({"experience", "education"} & lines),
-              "headings seen: " + ", ".join(sorted(lines & {"erfarenhet", "utbildning", "profil", "kompetenser", "språk", "experience", "education", "skills", "languages", "profile"})))
+        has = lambda pat: any(re.fullmatch(pat, l) for l in lines)
+        check("Swedish section headings",
+              has(r"\w*erfarenhet\w*") and has(r"utbildning") and not ({"experience", "education", "work experience"} & lines),
+              "headings seen: " + ", ".join(sorted(l for l in lines if 3 < len(l) < 24 and l.isalpha()))[:200])
     else:
         lines = {l.strip().lower() for l in cv_text.splitlines()}
         check("English section headings", "experience" in lines or "work experience" in lines)

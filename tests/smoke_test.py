@@ -202,6 +202,25 @@ with tempfile.TemporaryDirectory() as tmp:
     r = run(SCRIPTS / "build_cv.py", tmp / "fine.html", tmp / "fine.pdf", "--fit")
     check("Fit:" not in r.stdout and "Page count: 1" in r.stdout, "--fit leaves a 1-page CV alone")
 
+    print("\n[make_cv: one call to all deliverables]")
+    mk = tmp / "mk"
+    r = run(SCRIPTS / "make_cv.py", TESTS / "sample_cv.json", "--out", mk, "--name", "Jane_Doe_CV_Test", "--docx")
+    names = sorted(p.name for p in mk.glob("Jane_Doe_CV_Test.*"))
+    check(r.returncode == 0 and names == ["Jane_Doe_CV_Test.docx", "Jane_Doe_CV_Test.pdf", "Jane_Doe_CV_Test.txt"] or (not have_docx and r.returncode == 0),
+          f"PDF, txt and docx in one call {names}")
+    r = run(SCRIPTS / "make_cv.py", TESTS / "sample_cover_letter.json", "--out", mk, "--name", "Jane_Doe_CoverLetter_Test")
+    check(r.returncode == 0 and (mk / "Jane_Doe_CoverLetter_Test.pdf").exists(), "cover letter in one call (template picked from BODY)")
+    r = run(SCRIPTS / "make_cv.py", TESTS / "sample_cv.json", "--out", mk, "--name", "x", "--template", "nope")
+    check(r.returncode == 1 and "Template not found" in r.stderr, "unknown template is a clear error")
+    sim = (
+        "import sys; sys.path.insert(0, %r); import build_cv as b; "
+        "b.try_chrome = lambda *a, **k: False; b.try_weasyprint = lambda *a, **k: False; b.try_playwright = lambda *a, **k: False; "
+        "import make_cv; sys.argv = ['make_cv.py', sys.argv[1], '--out', sys.argv[2], '--name', 'Jane_NoPdf']; make_cv.main()"
+    ) % str(SCRIPTS)
+    r = subprocess.run([sys.executable, "-c", sim, str(TESTS / "sample_cv.json"), str(tmp / "nopdf")], capture_output=True, text=True)
+    check(r.returncode == 2 and (tmp / "nopdf" / "Jane_NoPdf.html").exists() and (tmp / "nopdf" / "Jane_NoPdf.txt").exists()
+          and not (tmp / "nopdf" / "Jane_NoPdf.pdf").exists(), "no PDF engine: make_cv exits 2 with HTML and text delivered")
+
     print("\n[eval fixtures are fictional]")
     evals = TESTS / "evals"
     cases = sorted(evals.glob("case_*"))

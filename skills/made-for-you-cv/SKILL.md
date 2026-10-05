@@ -25,7 +25,7 @@ Work in a scratch directory (temp or `/tmp`), never inside the skill folder.
 
 ## Workflow
 
-**0. Master CV.** Look for `master_cv.md` (attached, in the project or folder, or earlier in the chat); otherwise use the CV the user gave. Convert it to the structure in `assets/master_cv_template.md`: keep every fact, do not polish or drop anything, mark unknowns `[TODO]`. Deliver `master_cv.md` with the PDF and say in one sentence to keep it so next time skips this step.
+**0. Master CV.** Look for `master_cv.md` (attached, in the project or folder, or earlier in the chat); otherwise use the CV the user gave. Convert it to markdown with these sections (no need to open the template file): header and contact; summary; experience (title, company, place, dates, every bullet, tools); projects; education; skills (grouped); languages; certifications; and a "Notes for tailoring (never shown on the CV)" section. Keep every fact, do not polish or drop anything, mark unknowns `[TODO]`. Deliver `master_cv.md` with the PDF and say in one sentence to keep it so next time skips this step.
 
 **1. Inputs.** Job ad: pasted text, or read the URL (ask for a paste if that fails). Template: do not ask. Use the one the user named; else `minimal`, or `designer-accent` for a clearly design-led role. `two-column` only if asked or the application is clearly design-led or human-reviewed (small studio, direct to a hiring manager): its sidebar is parsed badly by many applicant tracking systems, so note that once if the user asks for it on an ATS-likely ad. **Language**: set `LANG` (en, sv, da, nb, de, nl, fr) from the language of the job ad; the CV and any cover letter are written in that language and the section headings follow `LANG`.
 
@@ -43,22 +43,28 @@ Work in a scratch directory (temp or `/tmp`), never inside the skill folder.
 - Region defaults (Sweden/Nordics, UK, NL, DE, other EU): omit photo, date of birth, marital status and nationality unless the user explicitly asks; location is city and country only; Nordic CVs may list languages with levels. Never put national ID numbers (personnummer, CPR) or street addresses on a CV, even if the source has them. Details: `references/cv_writing_guide.md` (read only when unsure about a market, a framing or an anti-pattern).
 - Quality bar: `references/example_tailored_cv.md` (read only when unsure).
 
-**5. Fill the template.** Write the tailored content to a JSON file and run `python3 "$SKILL_DIR/scripts/fill_template.py" minimal /tmp/cv_data.json /tmp/cv_working.html`. Keys, block HTML and the cover-letter keys are in `references/template_data.md` (read it the first time). Required: `NAME`, `TITLE`, `EMAIL`, `SUMMARY`, `EXPERIENCE_BLOCK`; also `LANG`, `SECTION_ORDER`, optional contact fields and blocks. It escapes, localizes headings and dates, and drops empty sections and contact items. Do not hand-edit HTML.
+**5. Write the data file.** One JSON file drives everything (strings; `SECTION_ORDER` may be a list). Required: `NAME`, `TITLE`, `EMAIL`, `SUMMARY` (plain text), `EXPERIENCE_BLOCK`. Optional: `LANG`, `SECTION_ORDER` (e.g. `"education,projects,experience"`), `LOCATION` (city, country), `PHONE`, `PORTFOLIO`, `LINKEDIN`, `GITHUB`, and the blocks `PROJECTS_BLOCK`, `EDUCATION_BLOCK`, `SKILLS_BLOCK`, `LANGUAGES_BLOCK`; empty or missing items disappear cleanly. Blocks are small HTML:
+- entry: `<div class="entry"><div class="entry-header"><span class="entry-title">Title</span><span class="entry-meta">Sep 2024 – Present</span></div><div class="entry-sub">Company · City</div><ul><li>Bullet</li></ul><div class="tech">React · TypeScript</div></div>` (`ul`, `entry-sub` and `tech` optional)
+- skills group: `<div class="skills-group"><strong>Frontend</strong> <span class="items">React, TypeScript</span></div>`
+- language: `<span class="lang">Swedish (fluent)</span>`
+Cover letter keys (`BODY` as `<p>` paragraphs, `SALUTATION`, `CLOSING`, optional `RECIPIENT_BLOCK`, `DATE`) and every detail are in `references/template_data.md`; open it only if a call fails or you need something unusual.
 
-**6. Build.** `python3 "$SKILL_DIR/scripts/build_cv.py" /tmp/cv_working.html /tmp/[FirstnameLastname]_CV_[Company]_[Role].pdf --fit --fallback`
-- `--fit` tightens spacing and type slightly (body text never below 9.5pt) if the CV runs over one page, and reports what it did. Only if it still does not fit, cut content and rebuild.
-- Exit code 2 means no PDF engine here. The finished `.html` and `.txt` were written instead: deliver them and say in one sentence to open the HTML and use Print, Save as PDF (A4, margins None), and that turning on code execution lets me make the PDF directly. If you cannot run scripts at all, write the filled HTML yourself and paste the plain text in the chat.
-- Plain-text copy for web forms: `python3 "$SKILL_DIR/scripts/html_to_text.py" /tmp/cv_working.html /tmp/[same name].txt`.
-- Word copy: `python3 "$SKILL_DIR/scripts/build_docx.py" /tmp/cv_data.json /tmp/[same name].docx` (single column, plain headings, no tables or images). Deliver it with the PDF when the ad signals a portal or ATS ("apply through our careers portal", large company, long structured ad) or the user asks for Word; otherwise just mention it is available. If it prints "Skipped", say so in one line and carry on.
+**6. Build everything in one call.**
+`python3 "$SKILL_DIR/scripts/make_cv.py" /tmp/cv_data.json --out [outputs folder] --name [FirstnameLastname]_CV_[Company]_[Role] [--template designer-accent] [--docx]`
+It fills the template, builds the PDF, writes the `.txt` for web forms, and with `--docx` a single-column Word copy (standard headings, no tables or images). Add `--docx` when the ad signals a portal or ATS ("apply through our careers portal", large company, long structured ad) or the user asks for Word; otherwise just mention that it is available.
+- It tightens spacing and type slightly (body text never below 9.5pt) if the CV runs over one page and reports it. Only if it still does not fit, cut the least relevant content and run again. `--pages 2` allows two pages for a long career.
+- Exit code 2 means no PDF engine here: the finished `.html` and `.txt` were written instead. Deliver them and say in one sentence to open the HTML and use Print, Save as PDF (A4, margins None), and that turning on code execution lets me make the PDF directly. If you cannot run scripts at all, write the filled HTML yourself and paste the plain text in the chat.
+- If `--docx` prints "Skipped", say so in one line and carry on.
+- Cover letter: a second data file with the letter keys, same command with `--name [FirstnameLastname]_CoverLetter_[Company]_[Role]` (the `cover-letter` template is picked automatically).
 
-**7. Verify.** Pages 1-2. Visual check with `python3 "$SKILL_DIR/scripts/preview_cv.py" file.pdf /tmp/prev` and look at the PNG once if the layout is new or `--fit` ran. Every must-have the background supports appears in the ad's wording; report coverage briefly ("Covered 6/7; GraphQL left out, not in your background").
+**7. Verify.** Read the build output: 1-2 pages, no warnings. Look at a PNG (`python3 "$SKILL_DIR/scripts/preview_cv.py" file.pdf /tmp/prev`) only if `--fit` could not reach the target or the output looks wrong; images are costly. Every must-have the background supports appears in the ad's wording; report coverage briefly ("Covered 6/7; GraphQL left out, not in your background").
 
-**8. Deliver** to the user's folder or the outputs location if there is one (else attach): PDF, `.txt`, `.docx` when applicable, `master_cv.md` on a first run. Save intermediates (JSON, HTML, PNG) only in scratch. Filename: `[FirstnameLastname]_CV_[Company]_[Role].pdf`, underscores, no spaces. Then, briefly: template used, what was emphasized or trimmed, honest gaps.
+**8. Deliver** into the user's folder or outputs location if there is one (else attach): PDF, `.txt`, `.docx` when made, `master_cv.md` on a first run. Keep intermediates (JSON, HTML, PNG) in scratch. Filenames use underscores, no spaces. Then, briefly: template used, what was emphasized or trimmed, honest gaps.
 
 **After the first PDF** add, short: one line that two other templates exist (name them); a list "To make it stronger, tell me:" with at most 3-5 concrete items ([TODO] fields, achievements without numbers); a one-line offer of a cover letter; and on a first run a reminder to keep `master_cv.md`. If the user shares new facts later, offer to update `master_cv.md`.
 
 ## Cover letters
-Only when asked (in the first message too, then deliver both in one turn). Read `references/cover_letter_guide.md` first. Fill the `cover-letter` template (keys in `references/template_data.md`; `DATE` is localized from `LANG`), build with `build_cv.py --fallback`, filename `[FirstnameLastname]_CoverLetter_[Company]_[Role].pdf`, plus `.txt`. 250-400 words, in the ad's language.
+Only when asked (in the first message too, then deliver both in one turn). Read `references/cover_letter_guide.md` first. Build it in step 6 as described there (`DATE` is localized from `LANG`). 250-400 words, in the ad's language.
 
 ## Rules that never change
 - **Honesty**: reframe, reorder, select. Never invent experience, numbers, titles, skills or tools; flag mismatches instead.
@@ -67,4 +73,4 @@ Only when asked (in the first message too, then deliver both in one turn). Read 
 - **Efficiency**: do not reread references you do not need, and do not narrate steps. One status line, then the files.
 
 ## Resources
-`assets/master_cv_template.md`; `assets/templates/` (minimal, two-column, designer-accent, cover-letter); `references/` (`template_data.md`, `job_parsing_guide.md`, `cv_writing_guide.md`, `cover_letter_guide.md`, `example_tailored_cv.md`); `scripts/` (`fill_template.py`, `build_cv.py`, `build_docx.py`, `html_to_text.py`, `preview_cv.py`, shared `cv_common.py`).
+`assets/master_cv_template.md`; `assets/templates/` (minimal, two-column, designer-accent, cover-letter); `references/` (`template_data.md`, `job_parsing_guide.md`, `cv_writing_guide.md`, `cover_letter_guide.md`, `example_tailored_cv.md`); `scripts/` (`make_cv.py` runs the rest; `fill_template.py`, `build_cv.py`, `build_docx.py`, `html_to_text.py`, `preview_cv.py`, shared `cv_common.py`).
