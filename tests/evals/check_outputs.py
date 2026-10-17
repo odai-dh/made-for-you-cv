@@ -65,7 +65,7 @@ def find(outputs, suffix, want_letter):
 
 NEXT_RE = re.compile(r"(next (job|application|ad|one)|another (job|ad|application)|nästa (jobb|ansökan|annons)|ny annons|paste (the |a )?(new|next|another)|klistra in (den )?nya)", re.I)
 PROJECT_TIP_RE = re.compile(r"(create a project|skapa ett projekt|\bproject\b.{0,60}master_cv|master_cv.{0,60}\bproject\b|job applications|projekt.{0,60}master_cv)", re.I)
-SEVERAL_RE = re.compile(r"(several ads|multiple ads|more than one ad|a few ads|flera annonser|flera ads)", re.I)
+SEVERAL_RE = re.compile(r"((several|multiple|a few|more than one|many) (job )?(ads|postings|adverts|listings)|flera (jobb)?annonser)", re.I)
 FILE_LINE_RE = re.compile(r"\.(pdf|txt|docx|html|md)\b", re.I)
 
 
