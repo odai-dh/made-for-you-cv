@@ -227,7 +227,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check(len(cases) == 4, f"4 eval cases ({len(cases)})")
     for c in cases:
         meta = json.loads((c / "case.json").read_text())
-        text = "".join(f.read_text() for f in ((c / "cv.md") if (c / "cv.md").exists() else (c / "master_cv.md"), c / "job_ad.md"))
+        text = "".join(f.read_text() for f in ((c / "cv.md") if (c / "cv.md").exists() else (c / "master_cv_example.md"), c / "job_ad.md"))
         emails = set(re.findall(r"[\w.+-]+@[\w.-]+\.\w+", text))
         phones = re.findall(r"\b0\d{2,4}[ -]?\d{3}[ -]?\d{2,3}[ -]?\d{0,3}\b", text)
         check(all(e.endswith("@example.com") for e in emails) and emails, f"{c.name}: emails use example.com")
