@@ -12,7 +12,7 @@ The user wants a CV, resume or cover letter made, updated or adapted for a job, 
 
 ## Fast paths (check first)
 **First run**: the first message has a CV (attached or pasted) and a job ad. Build the master CV silently (step 0), tailor it and deliver the PDF in the same turn. No template question, no interview.
-**Repeat application**: a `master_cv.md` is attached or already in the conversation and the user brings a new job ad. Go straight to the tailored PDF with no questions at all (skip step 0, reuse the master CV's "Notes for tailoring").
+**Repeat application** (the common case, make it effortless): a master CV is already available. Look in this order: an attached `master_cv.md`, Project knowledge or files, earlier in this conversation, any attached CV. When the user then pastes a new job ad: no questions, no preamble. Go straight to the tailored files (skip step 0, reuse the master CV's "Notes for tailoring"), then 2-3 lines: what was emphasized and any honest gaps. If the message holds several ads, do one tailored CV (and a cover letter each, if asked) per ad in the same turn: one data file and one build call per ad, file names by company and role.
 
 **Missing input** (ask once, in one short message, only for what blocks the PDF): only a CV, then build the master CV and ask "Paste the job ad (or a link) and I'll tailor it."; only an ad, then ask "Send your CV in any format: PDF, Word, a LinkedIn PDF export or pasted text."; neither, then ask for both. Everything else (`[TODO]` fields, missing numbers, target title) never blocks the first PDF: leave unknown fields out, never invent them, and ask afterwards.
 
@@ -25,7 +25,7 @@ Work in a scratch directory (temp or `/tmp`), never inside the skill folder.
 
 ## Workflow
 
-**0. Master CV.** Look for `master_cv.md` (attached, in the project or folder, or earlier in the chat); otherwise use the CV the user gave. Convert it to markdown with these sections (no need to open the template file): header and contact; summary; experience (title, company, place, dates, every bullet, tools); projects; education; skills (grouped); languages; certifications; and a "Notes for tailoring (never shown on the CV)" section. Keep every fact, do not polish or drop anything, mark unknowns `[TODO]`. Deliver `master_cv.md` with the PDF and say in one sentence to keep it so next time skips this step.
+**0. Master CV.** Find the master CV in the order given under Fast paths; otherwise use the CV the user gave. Convert it to markdown with these sections (no need to open the template file): header and contact; summary; experience (title, company, place, dates, every bullet, tools); projects; education; skills (grouped); languages; certifications; and a "Notes for tailoring (never shown on the CV)" section. Keep every fact, do not polish or drop anything, mark unknowns `[TODO]`. Deliver `master_cv.md` with the PDF and say in one sentence to keep it so next time skips this step.
 
 **1. Inputs.** Job ad: pasted text, or read the URL (ask for a paste if that fails). Template: do not ask. Use the one the user named; else `minimal`, or `designer-accent` for a clearly design-led role. `two-column` only if asked or the application is clearly design-led or human-reviewed (small studio, direct to a hiring manager): its sidebar is parsed badly by many applicant tracking systems, so note that once if the user asks for it on an ATS-likely ad. **Language**: set `LANG` (en, sv, da, nb, de, nl, fr) from the language of the job ad; the CV and any cover letter are written in that language and the section headings follow `LANG`.
 
@@ -59,9 +59,13 @@ It fills the template, builds the PDF, writes the `.txt` for web forms, and with
 
 **7. Verify.** Read the build output: 1-2 pages, no warnings. Look at a PNG (`python3 "$SKILL_DIR/scripts/preview_cv.py" file.pdf /tmp/prev`) only if `--fit` could not reach the target or the output looks wrong; images are costly. Every must-have the background supports appears in the ad's wording; report coverage briefly ("Covered 6/7; GraphQL left out, not in your background").
 
-**8. Deliver** into the user's folder or outputs location if there is one (else attach): PDF, `.txt`, `.docx` when made, `master_cv.md` on a first run. Keep intermediates (JSON, HTML, PNG) in scratch. Filenames use underscores, no spaces. Then, briefly: template used, what was emphasized or trimmed, honest gaps.
+**8. Deliver** into the user's folder or outputs location if there is one (else attach): PDF, `.txt`, `.docx` when made, `master_cv.md` on a first run or when updated. Keep intermediates (JSON, HTML, PNG) in scratch. Filenames use underscores, no spaces. Then, briefly: template used, what was emphasized or trimmed, honest gaps.
 
-**After the first PDF** add, short: one line that two other templates exist (name them); a list "To make it stronger, tell me:" with at most 3-5 concrete items ([TODO] fields, achievements without numbers); a one-line offer of a cover letter; and on a first run a reminder to keep `master_cv.md`. If the user shares new facts later, offer to update `master_cv.md`.
+**Closing lines** (after the files, short, in the user's language, never pushy). Every run: one line such as "Next job? Paste the new ad here and I'll tailor it from your master CV, no questions." First run only (the master CV was just created): one more line to keep it: on claude.ai create a Project (for example "Job applications") and add `master_cv.md` to its files so every new chat has it, otherwise attach `master_cv.md` next time; and that several ads can be pasted at once for one CV per ad. Say these tips once per conversation; do not repeat them on later runs.
+
+**First run only, also add**: one line that two other templates exist (name them); a list "To make it stronger, tell me:" with at most 3-5 concrete items ([TODO] fields, achievements without numbers); a one-line cover letter offer.
+
+**Keep the master CV current.** If the user shares new facts at any point (a new job, skill, number, course), update `master_cv.md`, deliver the updated file and say in one line what changed.
 
 ## Cover letters
 Only when asked (in the first message too, then deliver both in one turn). Read `references/cover_letter_guide.md` first. Build it in step 6 as described there (`DATE` is localized from `LANG`). 250-400 words, in the ad's language.

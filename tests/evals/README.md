@@ -1,12 +1,13 @@
 # Evals
 
-Three fictional cases (invented people, example.com emails, 070-000 phone numbers, made-up companies) for comparing the plugin with plain Claude.
+Four fictional cases (invented people, example.com emails, 070-000 phone numbers, made-up companies) for comparing the plugin with plain Claude.
 
 | Case | Tests |
 |---|---|
 | `case_a_junior_frontend` | Junior frontend developer, React/TypeScript role at a fintech. Honesty (no invented Playwright), honest junior title, keywords. |
 | `case_b_uk_analyst_portal` | UK analyst whose CV has date of birth, marital status, nationality, photo note and a street address; applying to a large insurer through a careers portal. Privacy, no invented Synapse, no "Senior" title, `.docx` for the portal. |
 | `case_c_swedish_switcher` | Swedish career switcher with personnummer and address, Swedish ad that needs 3+ years of B2B SaaS and Salesforce. Swedish headings, no invented Salesforce, honest title, personligt brev of 250-400 words. |
+| `case_d_repeat_application` | Repeat use: the master CV already exists in the conversation and the user pastes a second job ad. No questions, PDF delivered, short summary, the next-application line present, the Project and several-ads tips not repeated. Needs the runner to save the assistant's final message as `final_message.md` in the outputs folder. |
 
 Each case folder has `cv.md`, `job_ad.md`, `prompt.txt` (the user message) and `case.json` (the checks).
 

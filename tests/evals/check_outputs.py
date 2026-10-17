@@ -63,6 +63,40 @@ def find(outputs, suffix, want_letter):
     return hits[0] if hits else None
 
 
+NEXT_RE = re.compile(r"(next (job|application|ad|one)|another (job|ad|application)|nästa (jobb|ansökan|annons)|ny annons|paste (the |a )?(new|next|another)|klistra in (den )?nya)", re.I)
+PROJECT_TIP_RE = re.compile(r"(create a project|skapa ett projekt|\bproject\b.{0,60}master_cv|master_cv.{0,60}\bproject\b|job applications|projekt.{0,60}master_cv)", re.I)
+SEVERAL_RE = re.compile(r"(several ads|multiple ads|more than one ad|a few ads|flera annonser|flera ads)", re.I)
+FILE_LINE_RE = re.compile(r"\.(pdf|txt|docx|html|md)\b", re.I)
+
+
+def check_message(case, outputs, check):
+    """Checks on the assistant's final message, saved by the runner as <message.file>."""
+    m = case["message"]
+    path = next(iter(sorted(outputs.rglob(m["file"]))), None)
+    check("final message saved", path is not None, m["file"] if not path else "")
+    if not path:
+        return
+    text = path.read_text()
+    lines = [l for l in text.splitlines() if l.strip()]
+    if m.get("no_questions"):
+        asked = [l.strip() for l in lines if "?" in l and not NEXT_RE.search(l)]
+        check("no questions asked", not asked, str(asked[:3]))
+    if m.get("max_summary_words"):
+        body = " ".join(l for l in lines if not FILE_LINE_RE.search(l) and not NEXT_RE.search(l))
+        n = len(body.split())
+        check(f"summary short (<= {m['max_summary_words']} words)", n <= m["max_summary_words"], f"{n} words")
+    if m.get("next_line"):
+        check("next-application line present", bool(NEXT_RE.search(text)))
+    if m.get("project_tip") == "absent":
+        check("Project tip not repeated", not PROJECT_TIP_RE.search(text))
+    elif m.get("project_tip") == "present":
+        check("Project tip given", bool(PROJECT_TIP_RE.search(text)))
+    if m.get("several_ads_tip") == "absent":
+        check("several-ads tip not repeated", not SEVERAL_RE.search(text))
+    elif m.get("several_ads_tip") == "present":
+        check("several-ads tip given", bool(SEVERAL_RE.search(text)))
+
+
 def run(case_dir, outputs):
     case = json.loads((case_dir / "case.json").read_text())
     results = []
@@ -156,6 +190,8 @@ def run(case_dir, outputs):
         body = re.sub(r"\s+", " ", t)
         n = len(body.split())
         check(f"cover letter delivered, {lo}-{hi} words", bool(t) and lo <= n <= hi, f"{n} words")
+    if "message" in case:
+        check_message(case, outputs, check)
     return results
 
 

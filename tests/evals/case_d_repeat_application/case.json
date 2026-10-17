@@ -1,0 +1,21 @@
+{
+  "name": "d_repeat_application",
+  "description": "Repeat application: the master CV already exists in the conversation (a first CV was delivered earlier, with the keep-it and several-ads tips). The user pastes a second job ad. Expect no questions, a PDF, a short summary, the next-application line, and no repeated Project or several-ads tip.",
+  "lang": "en",
+  "pages": [1, 2],
+  "forbidden_personal": ["Fernleigh", "passport"],
+  "forbidden_skills": ["Playwright", "Cypress"],
+  "header_title_must_not_match": ["Senior", "Lead", "Principal", "Staff"],
+  "must_keywords": ["React", "TypeScript", "WCAG", "test"],
+  "expect_docx": false,
+  "expect_cover_letter": false,
+  "swedish_headings": false,
+  "message": {
+    "file": "final_message.md",
+    "no_questions": true,
+    "max_summary_words": 120,
+    "next_line": true,
+    "project_tip": "absent",
+    "several_ads_tip": "absent"
+  }
+}

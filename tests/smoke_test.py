@@ -224,16 +224,40 @@ with tempfile.TemporaryDirectory() as tmp:
     print("\n[eval fixtures are fictional]")
     evals = TESTS / "evals"
     cases = sorted(evals.glob("case_*"))
-    check(len(cases) == 3, f"3 eval cases ({len(cases)})")
+    check(len(cases) == 4, f"4 eval cases ({len(cases)})")
     for c in cases:
         meta = json.loads((c / "case.json").read_text())
-        text = (c / "cv.md").read_text() + (c / "job_ad.md").read_text()
+        text = "".join(f.read_text() for f in ((c / "cv.md") if (c / "cv.md").exists() else (c / "master_cv.md"), c / "job_ad.md"))
         emails = set(re.findall(r"[\w.+-]+@[\w.-]+\.\w+", text))
         phones = re.findall(r"\b0\d{2,4}[ -]?\d{3}[ -]?\d{2,3}[ -]?\d{0,3}\b", text)
         check(all(e.endswith("@example.com") for e in emails) and emails, f"{c.name}: emails use example.com")
         check(all(re.search(r"0{3}|00 ?\d{3}", p) for p in phones), f"{c.name}: phone numbers are 07x-000 style")
         check(all(k in meta for k in ("lang", "pages", "forbidden_personal", "forbidden_skills", "must_keywords")), f"{c.name}: case.json is complete")
         check((c / "prompt.txt").exists(), f"{c.name}: prompt.txt")
+
+    print("\n[eval message checks work (controls)]")
+    sys.path.insert(0, str(evals))
+    import check_outputs as co
+    case = json.loads((evals / "case_d_repeat_application" / "case.json").read_text())
+    good = ("Tailored for Brightwell Health. Emphasized React, TypeScript and the WCAG work. Gap: no Cypress or Playwright, left out.\n"
+            "- Maja_Holmgren_CV_Brightwell.pdf\nNext job? Paste the new ad here and I'll tailor it from your master CV, no questions.")
+    bad_cases = {
+        "asks a question": good.replace("Gap:", "Which template do you want? Gap:"),
+        "repeats the Project tip": good + "\nCreate a Project and add master_cv.md to its files.",
+        "repeats the several-ads tip": good + "\nYou can paste several ads at once.",
+        "no next line": good.split("\nNext job?")[0],
+        "too long": "word " * 200 + "\n" + good,
+    }
+    def run_msg(text):
+        d = tmp / "msg"
+        d.mkdir(exist_ok=True)
+        (d / "final_message.md").write_text(text)
+        out = []
+        co.check_message(case, d, lambda n, ok, detail="": out.append((n, ok)))
+        return out
+    check(all(ok for _, ok in run_msg(good)), "a good repeat-run message passes every message check")
+    for label, text in bad_cases.items():
+        check(not all(ok for _, ok in run_msg(text)), f"message check catches: {label}")
 
     print("\n[guards]")
     (tmp / "bad.json").write_text(json.dumps({"NAME": "X"}))

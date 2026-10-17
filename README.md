@@ -4,7 +4,7 @@
 
 **Attach your CV, paste a job ad, and say: _Tailor my CV for this job._**
 
-You get a tailored, ATS-aware PDF CV (plus a plain-text copy for web forms, and a Word copy for careers portals) in one go. No setup, no questions first. Next time, attach the `master_cv.md` it gave you and a new job ad goes straight to the PDF.
+You get a tailored, ATS-aware PDF CV (plus a plain-text copy for web forms, and a Word copy for careers portals) in one go. No setup, no questions first. Next time it is even faster: keep the `master_cv.md` it gives you, and every new job ad (or several at once) goes straight to a tailored PDF with no questions. On claude.ai, create a Project (for example "Job applications") and add `master_cv.md` to its files so every new chat has it.
 
 Three prompts to try:
 
