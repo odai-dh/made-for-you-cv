@@ -73,6 +73,8 @@ def check_message(case, outputs, check):
     """Checks on the assistant's final message, saved by the runner as <message.file>."""
     m = case["message"]
     path = next(iter(sorted(outputs.rglob(m["file"]))), None)
+    if not path and m.get("file_optional"):
+        return  # older runs did not save the message; skip message checks
     check("final message saved", path is not None, m["file"] if not path else "")
     if not path:
         return
@@ -87,6 +89,8 @@ def check_message(case, outputs, check):
         check(f"summary short (<= {m['max_summary_words']} words)", n <= m["max_summary_words"], f"{n} words")
     if m.get("next_line"):
         check("next-application line present", bool(NEXT_RE.search(text)))
+    if m.get("last_line_is_next"):
+        check("next-application line is the last line", bool(lines) and bool(NEXT_RE.search(lines[-1])), lines[-1][:80] if lines else "")
     if m.get("project_tip") == "absent":
         check("Project tip not repeated", not PROJECT_TIP_RE.search(text))
     elif m.get("project_tip") == "present":

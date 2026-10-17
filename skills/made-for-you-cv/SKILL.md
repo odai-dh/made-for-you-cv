@@ -31,7 +31,7 @@ Work in a scratch directory (temp or `/tmp`), never inside the skill folder.
 
 **2. Read the ad** (internally). Role, company, region, seniority; must-haves (required, "you have") vs nice-to-haves; stack and tone signals. When unclear, treat as a must-have. Read `references/job_parsing_guide.md` only for a long, vague or non-tech ad.
 
-**3. Say what you are doing, then continue in the same turn:** "This is a [archetype] role at [company] in [region]. Must-haves: [3-4]. Strongest matches: [2-3]. Gaps: [1-2]. Generating now." Pause only if the gaps are so large that a tailored CV would mislead.
+**3. First run only: say what you are doing, then continue in the same turn:** "This is a [archetype] role at [company] in [region]. Must-haves: [3-4]. Strongest matches: [2-3]. Gaps: [1-2]. Generating now." Pause only if the gaps are so large that a tailored CV would mislead. On a repeat application skip this recap entirely; the one message at the end covers it.
 
 **4. Tailor.**
 - Summary (2-3 lines) mirrors the role. Reorder experience and projects, most relevant first. Trim skills to the ad plus adjacent; group them.
@@ -59,11 +59,11 @@ It fills the template, builds the PDF, writes the `.txt` for web forms, and with
 
 **7. Verify.** Read the build output: 1-2 pages, no warnings. Look at a PNG (`python3 "$SKILL_DIR/scripts/preview_cv.py" file.pdf /tmp/prev`) only if `--fit` could not reach the target or the output looks wrong; images are costly. Every must-have the background supports appears in the ad's wording; report coverage briefly ("Covered 6/7; GraphQL left out, not in your background").
 
-**8. Deliver** into the user's folder or outputs location if there is one (else attach): PDF, `.txt`, `.docx` when made, `master_cv.md` on a first run or when updated. Keep intermediates (JSON, HTML, PNG) in scratch. Filenames use underscores, no spaces. Then, briefly: template used, what was emphasized or trimmed, honest gaps.
+**8. Deliver** into the user's folder or outputs location if there is one (else attach): PDF, `.txt`, `.docx` when made, `master_cv.md` on a first run or when updated. Keep intermediates (JSON, HTML, PNG) in scratch. Filenames use underscores, no spaces. The message itself is described under "The final message".
 
-**Closing lines** (after the files, short, in the user's language, never pushy). Every run: one line such as "Next job? Paste the new ad here and I'll tailor it from your master CV, no questions." First run only (the master CV was just created): one more line to keep it: on claude.ai create a Project (for example "Job applications") and add `master_cv.md` to its files so every new chat has it, otherwise attach `master_cv.md` next time; and that several ads can be pasted at once for one CV per ad. Say these tips once per conversation; do not repeat them on later runs.
+**The final message.** Repeat application: the file list, then 2-3 lines (what was emphasized, any honest gaps), then the closing line. Nothing else: no role recap, no template talk, no "to make it stronger" list, no cover letter offer. First run: the file list, a short summary (template used, what was emphasized or trimmed, honest gaps), one line that two other templates exist (name them), a list "To make it stronger, tell me:" with at most 3-5 concrete items ([TODO] fields, achievements without numbers), a one-line cover letter offer, then the closing lines.
 
-**First run only, also add**: one line that two other templates exist (name them); a list "To make it stronger, tell me:" with at most 3-5 concrete items ([TODO] fields, achievements without numbers); a one-line cover letter offer.
+**Closing lines** (always last, short, in the user's language, never pushy). Every run: one line such as "Next job? Paste the new ad here and I'll tailor it from your master CV, no questions." First run only (the master CV was just created), put these two lines just before it: how to keep the master CV (on claude.ai create a Project, for example "Job applications", and add `master_cv.md` to its files so every new chat has it; otherwise attach `master_cv.md` next time) and that several ads can be pasted at once for one CV per ad. Say those tips once per conversation; never repeat them on later runs.
 
 **Keep the master CV current.** If the user shares new facts at any point (a new job, skill, number, course), update `master_cv.md`, deliver the updated file and say in one line what changed.
 
