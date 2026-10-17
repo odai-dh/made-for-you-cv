@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1
+Repeat use: make the second, third and tenth application effortless, and make sure people know. Honesty, privacy and template behavior are unchanged.
+- **Next-application line.** Every run ends with one short line, in the user's language, saying how to do the next job ("Next job? Paste the new ad here and I'll tailor it from your master CV, no questions.").
+- **First-run tips, once per conversation.** When the master CV was just created, one more line explains how to keep it (on claude.ai, a Project such as "Job applications" with `master_cv.md` in its files; otherwise attach it next time) and that several ads can be pasted at once for one CV per ad. These are not repeated on later runs.
+- **Repeat-application fast path.** The master CV is looked up in this order: attached `master_cv.md`, Project knowledge or files, earlier in the conversation, any attached CV. A new ad then goes straight to the tailored files with no questions and no preamble, followed by a 2-3 line summary.
+- **Several ads in one message** produce one tailored CV (and cover letter, if asked) per ad, named by company and role.
+- **Master CV stays current.** New facts shared at any point (job, skill, number, course) update `master_cv.md`, which is delivered again with a one-line note on what changed.
+- `/made-for-you-cv:cv` handles the repeat path: with a master CV available it only asks for the job ad(s), in one sentence.
+- New eval case `case_d_repeat_application` and message-level checks (no questions, short summary, next-application line, tips not repeated).
+
 ## 0.4.0
 Fixes two bugs from a side-by-side eval against plain Claude, makes runs leaner, and leans into what the plugin does that plain Claude cannot. Honesty, privacy and neutral-palette rules are unchanged.
 - **Fix: section headings follow the CV's language.** All four templates use heading tokens. `LANG` (en, sv, da, nb, de, nl, fr) sets Profil/Erfarenhet/Utbildning/Kompetenser/Språk and so on, and any heading can be overridden. Cover-letter dates are written in the same language (5 oktober 2026, 5. Oktober 2026).
